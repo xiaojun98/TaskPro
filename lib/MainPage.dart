@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+import 'Login.dart';
 
 void main() => runApp(MaterialApp(
-  home : Home(),
+  home : MainPage(),
 )
 )
 ;
 
-class Home extends StatefulWidget{
+class MainPage extends StatefulWidget{
   @override
   _HomeState createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> {
+class _HomeState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,20 +28,24 @@ class _HomeState extends State<Home> {
         children: <Widget>[
           Padding(
             padding: EdgeInsets.symmetric(vertical: 10) ,
-            child: CircleAvatar (backgroundImage : AssetImage('assets/rocket.jpg')),
+            child: CircleAvatar (backgroundImage : AssetImage('assets/rocket.jpg'),radius: 30,),
           ),
           Padding(
-            padding: EdgeInsets.symmetric(vertical: 20.0) ,
-            child: Text('TaskPro', style: TextStyle(fontSize: 36,color: Colors.amberAccent[400]),),
+            padding: EdgeInsets.fromLTRB(0,10,0,20) ,
+            child: Text('TaskPro', style: TextStyle(fontSize: 48,color: Colors.amberAccent[400]),fontFamily: 'OpenSansR'),
           ),
           OutlineButton(
-            onPressed: (){},
-            child: Text ('Login'),
+            onPressed: (){
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Login()));
+            },
+            child: Text ('Login',style: TextStyle(fontSize: 18,color: Colors.amberAccent[400],fontFamily: 'OpenSansR')),
             shape: new RoundedRectangleBorder(borderRadius: new BorderRadius.circular(30.0)),
           ),
           OutlineButton(
             onPressed: (){},
-            child: Text ('Register'),
+            child: Text ('Register', style: TextStyle(fontSize: 18,color: Colors.amberAccent[400],fontFamily: 'OpenSansR')),
             shape: new RoundedRectangleBorder(borderRadius: new BorderRadius.circular(30.0)),
 
           ),
