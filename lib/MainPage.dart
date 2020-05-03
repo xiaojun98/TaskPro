@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'Login.dart';
+import 'Register.dart';
 
 void main() => runApp(MaterialApp(
   home : MainPage(),
@@ -28,11 +29,11 @@ class _HomeState extends State<MainPage> {
         children: <Widget>[
           Padding(
             padding: EdgeInsets.symmetric(vertical: 10) ,
-            child: CircleAvatar (backgroundImage : AssetImage('assets/rocket.jpg'),radius: 30,),
+            child: CircleAvatar (backgroundImage : AssetImage('assets/rocket.jpg'),radius: 60,),
           ),
           Padding(
             padding: EdgeInsets.fromLTRB(0,10,0,20) ,
-            child: Text('TaskPro', style: TextStyle(fontSize: 48,color: Colors.amberAccent[400]),fontFamily: 'OpenSansR'),
+            child: Text('TaskPro', style: TextStyle(fontSize: 56,color: Colors.amberAccent[400],),),
           ),
           OutlineButton(
             onPressed: (){
@@ -44,7 +45,11 @@ class _HomeState extends State<MainPage> {
             shape: new RoundedRectangleBorder(borderRadius: new BorderRadius.circular(30.0)),
           ),
           OutlineButton(
-            onPressed: (){},
+            onPressed: (){
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Register()));
+            },
             child: Text ('Register', style: TextStyle(fontSize: 18,color: Colors.amberAccent[400],fontFamily: 'OpenSansR')),
             shape: new RoundedRectangleBorder(borderRadius: new BorderRadius.circular(30.0)),
 
