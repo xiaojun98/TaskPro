@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'Timeline.dart';
+import 'MyTask.dart';
+import 'CreateTask.dart';
+import 'MySchedule.dart';
+import 'Account.dart';
 
 void main() => runApp(MaterialApp(
   home : MainNavigation(),
@@ -15,11 +20,11 @@ class _HomeState extends State<MainNavigation> {
   int _currentIndex = 0;
 
   final tabs = [
-    Center(child:Text('Timeline')),
-    Center(child:Text('My Task')),
-    Center(child:Text('Create Task')),
-    Center(child:Text('Schedule')),
-    Center(child:Text('Account')),
+    Timeline(),
+    MyTask(),
+    CreateTask(),
+    MySchedule(),
+    Account(),
   ];
   @override
   Widget build(BuildContext context) {
@@ -43,7 +48,7 @@ class _HomeState extends State<MainNavigation> {
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.calendar_today),
-              title: Text('Calendar'),
+              title: Text('Schedule'),
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.account_circle),
@@ -60,7 +65,4 @@ class _HomeState extends State<MainNavigation> {
         ),
         );
   }
-
-
-
 }

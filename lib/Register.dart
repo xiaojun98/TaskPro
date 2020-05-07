@@ -102,9 +102,7 @@ class _HomeState extends State<Register> {
                       children: <Widget>[
                         OutlineButton(
                           onPressed: (){
-//              Navigator.push(
-//                  context,
-//                  MaterialPageRoute(builder: (context) => Login()));
+                            //register
                           },
                           child: Text ('Register',
                             style: TextStyle(fontSize: 18,color: Colors.amberAccent[400],fontFamily: 'OpenSansR'),),
