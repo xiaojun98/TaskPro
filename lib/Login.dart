@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:testapp/MainNavigation.dart';
 
 void main() => runApp(MaterialApp(
   home : Login(),
@@ -57,9 +58,9 @@ class _HomeState extends State<Login> {
               ),
               OutlineButton(
                 onPressed: (){
-//              Navigator.push(
-//                  context,
-//                  MaterialPageRoute(builder: (context) => Login()));
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => MainNavigation()));
                 },
                 child: Text ('Login',
                   style: TextStyle(fontSize: 18,color: Colors.amberAccent[400],fontFamily: 'OpenSansR'),),

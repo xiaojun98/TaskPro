@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'MainPage.dart';
 
 class Account extends StatefulWidget {
   _HomeState createState() => _HomeState();
@@ -122,7 +123,9 @@ class _HomeState extends State<Account> {
                   ),
                   ListTile(
                     onTap: (){
-
+                      Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => MainPage()));
                     },
                     leading: Icon(Icons.exit_to_app),
                     title: Text("Log out", style : TextStyle(fontFamily: 'OpenSans-R',fontSize: 16)),

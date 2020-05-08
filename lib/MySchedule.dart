@@ -38,7 +38,7 @@ class _HomeState extends State<MySchedule> {
             ),
             Container(
               margin: EdgeInsets.symmetric(vertical: 5,horizontal: 15),
-              height: 200,
+              height: 300,
               child: ListView.builder(
                 padding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
                 itemCount: deadlines.length,

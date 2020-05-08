@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'MySingleTaskView.dart';
 
 class MyTask extends StatefulWidget {
   _HomeState createState() => _HomeState();
@@ -44,7 +45,7 @@ class _HomeState extends State<MyTask> {
     return DefaultTabController(
       length: 4,
       child: Scaffold(
-        appBar: AppBar(title : Text('MyTask'),
+        appBar: AppBar(title : Text('My Task'),
           centerTitle: true ,
           elevation: 0.0,
           backgroundColor: Colors.amberAccent[400],
@@ -67,7 +68,11 @@ class _HomeState extends State<MyTask> {
               itemBuilder: (context,index){
                 return Card(
                   child: ListTile(
-                    onTap: (){},
+                    onTap: (){
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => MySingleTaskView()));
+                    },
                     leading: _getIcon(taskPub[index].status),
                     title: Text(taskPub[index].taskTitle),
                     trailing: Text(taskPub[index].getStatus(),style: TextStyle(fontSize: 12),),

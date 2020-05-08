@@ -55,7 +55,7 @@ class _HomeState extends State<CreateTask> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Text('Title for the task',style: _style,),
+              Text('Title',style: _style,),
               Padding(
                 padding: const EdgeInsets.fromLTRB(0,5,0,15),
                 child: TextField(
@@ -63,7 +63,7 @@ class _HomeState extends State<CreateTask> {
                   decoration: InputDecoration(
 //                  prefixIcon : Icon(Icons.account_box),
                     border: OutlineInputBorder(),
-                    hintText: "Title",
+                    hintText: "Title for the task",
                     hintStyle: TextStyle(
                         color :Colors.grey,
                         fontSize: 14

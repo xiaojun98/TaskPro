@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'MainPage.dart';
+import 'MainNavigation.dart';
 
 void main() => runApp(MaterialApp(
   home : Register(),
@@ -102,7 +103,9 @@ class _HomeState extends State<Register> {
                       children: <Widget>[
                         OutlineButton(
                           onPressed: (){
-                            //register
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => MainNavigation()));
                           },
                           child: Text ('Register',
                             style: TextStyle(fontSize: 18,color: Colors.amberAccent[400],fontFamily: 'OpenSansR'),),
