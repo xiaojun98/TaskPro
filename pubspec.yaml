@@ -26,6 +26,8 @@ dependencies:
   table_calendar: ^2.2.3
   datetime_picker_formfield: ^1.0.0
   moneytextformfield: ^0.3.5+1
+  firebase_auth: ^0.16.1
+  cloud_firestore: ^0.13.6
 
 dev_dependencies:
   flutter_test:

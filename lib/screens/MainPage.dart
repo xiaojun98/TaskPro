@@ -2,12 +2,6 @@ import 'package:flutter/material.dart';
 import 'Login.dart';
 import 'Register.dart';
 
-void main() => runApp(MaterialApp(
-  home : MainPage(),
-)
-)
-;
-
 class MainPage extends StatefulWidget{
   @override
   _HomeState createState() => _HomeState();

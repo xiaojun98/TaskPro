@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:testapp/MainNavigation.dart';
+import 'package:testapp/screens/MainNavigation.dart';
 
 void main() => runApp(MaterialApp(
   home : Login(),

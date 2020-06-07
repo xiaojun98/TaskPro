@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "562339439042",
+    "firebase_url": "https://taskpro-47370.firebaseio.com",
+    "project_id": "taskpro-47370",
+    "storage_bucket": "taskpro-47370.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:562339439042:android:d648f6e3ad5b0b67c6b65b",
+        "android_client_info": {
+          "package_name": "com.fyp.taskpro"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "562339439042-97q55si279pqnc3kn7mp3glndsf0v25g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUfTXRdQ9kI7jkJLquVC4LBCTfdpxmSz0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "562339439042-97q55si279pqnc3kn7mp3glndsf0v25g.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
