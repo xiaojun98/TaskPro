@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'Timeline.dart';
 import 'MyTask.dart';
@@ -13,12 +14,16 @@ void main() => runApp(MaterialApp(
 
 class MainNavigation extends StatefulWidget{
   @override
-  _HomeState createState() => _HomeState();
+
+  final FirebaseUser user;
+  MainNavigation({this.user});
+  _HomeState createState() => new _HomeState(user);
 }
 
 class _HomeState extends State<MainNavigation> {
   int _currentIndex = 0;
-
+  FirebaseUser user;
+  _HomeState(this.user);
   final tabs = [
     Timeline(),
     MyTask(),
