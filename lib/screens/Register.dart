@@ -5,6 +5,7 @@ import 'Login.dart';
 import 'MainPage.dart';
 import 'MainNavigation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:testapp/services/loadingDialog.dart';
 
 
 class Register extends StatefulWidget{
@@ -15,29 +16,21 @@ class Register extends StatefulWidget{
 class _HomeState extends State<Register> {
 
   final _codeController = TextEditingController();
+  final _keyLoader = GlobalKey<State>();
   final db = Firestore.instance;
   String _code = '';
   String _uid = '';
 
 
-  Future <bool> registerUser(String name, String phnum, String email,
-      String idnum, BuildContext context) async {
+  Future <bool> registerUser(String name, String phnum, String email, String idnum, BuildContext context) async {
+    String msg = '';
     FirebaseAuth _auth = FirebaseAuth.instance;
     _auth.verifyPhoneNumber(
         phoneNumber: phnum,
         timeout: Duration(seconds: 0),
         //0 to disable auto-retrieval of code
-        verificationCompleted: (AuthCredential credential) async {
-          Navigator.of(context).pop();
-          AuthResult result = await _auth.signInWithCredential(credential);
-          FirebaseUser user = result.user;
-          _uid = user.uid;
-          if (user != null) {
-            Navigator.push(context, MaterialPageRoute(
-                builder: (context) => MainNavigation(user: user)
-            ));
-          }
-        },
+        //verificationCompleted only occure if auto-retrieval
+        verificationCompleted: null,
         verificationFailed: (AuthException exp) {
           print(exp);
         },
@@ -68,14 +61,24 @@ class _HomeState extends State<Register> {
                         AuthCredential credential = PhoneAuthProvider
                             .getCredential(
                             verificationId: verfId, smsCode: _code);
-                        AuthResult result = await _auth.signInWithCredential(
-                            credential);
+                        AuthResult result = await _auth.signInWithCredential(credential).catchError((e){showDialog(child: Text(e.toString()));});
                         FirebaseUser user = result.user;
-                        _uid = user.uid;
                         if (user != null) {
-                          Navigator.push(context, MaterialPageRoute(
-                              builder: (context) => MainNavigation(user: user)
-                          ));
+                          LoadingDialog.showLoadingDialog(context, _keyLoader, "Validating...");
+                          _uid = user.uid;
+                          await db.collection("users").document(_uid).setData({
+                            'name': _name,
+                            'ph_num': _phnum,
+                            'email': _email,
+                            'idnum': _idnum
+                          }).catchError((e){
+                            print("$e,#in confirm button $_uid");
+                            msg=e.toString();}).then((value){
+                              Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
+                              Navigator.push(context, MaterialPageRoute(
+                                  builder: (context) => MainNavigation(user: user)
+                              ));
+                          });
                         }
                         else {
                           print("User null");
@@ -110,29 +113,29 @@ class _HomeState extends State<Register> {
         centerTitle: true,
         elevation: 0.0,
         backgroundColor: Colors.amberAccent[400],),
-      body: Center(
-        child: Column(
-          children: <Widget>[
-            Container(
-              margin: EdgeInsets.fromLTRB(30, 50, 30, 10),
-              child: Column(
-                children: <Widget>[
-                  Text("Register an Account",
-                    style: TextStyle(fontSize: 25,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'OpenSansR'),
-                    textAlign: TextAlign.center,
-                  ),
-                  Text("Don't have an account? Register now.",
-                    style: TextStyle(fontSize: 16, fontFamily: 'OpenSans-R'),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+      body: SingleChildScrollView(
+        child: Center(
+          child: Column(
+            children: <Widget>[
+              Container(
+                margin: EdgeInsets.fromLTRB(30, 50, 30, 10),
+                child: Column(
+                  children: <Widget>[
+                    Text("Register an Account",
+                      style: TextStyle(fontSize: 25,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'OpenSansR'),
+                      textAlign: TextAlign.center,
+                    ),
+                    Text("Don't have an account? Register now.",
+                      style: TextStyle(fontSize: 16, fontFamily: 'OpenSans-R'),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Expanded(
-              flex: 4,
-              child: Container(
+              Container(
+                height: 500,
                 margin: EdgeInsets.symmetric(vertical: 10, horizontal: 30),
                 padding: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
                 child: Form(
@@ -161,6 +164,7 @@ class _HomeState extends State<Register> {
                           setState(() => _name = val);
                         },
                       ),
+                      SizedBox(height: 20,),
                       TextFormField(
                         controller: _phnumController,
                         //validate input in client side
@@ -182,6 +186,7 @@ class _HomeState extends State<Register> {
                           setState(() => _phnum = val);
                         },
                       ),
+                      SizedBox(height: 20,),
                       TextFormField(
                         controller: _emailController,
                         textAlign: TextAlign.center,
@@ -207,6 +212,7 @@ class _HomeState extends State<Register> {
                           setState(() => _email = val);
                         },
                       ),
+                      SizedBox(height: 20,),
                       TextFormField(
                         controller: _idnumController,
                         textAlign: TextAlign.center,
@@ -227,6 +233,7 @@ class _HomeState extends State<Register> {
                           setState(() => _idnum = val);
                         },
                       ),
+                      SizedBox(height: 20,),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: <Widget>[
@@ -235,12 +242,12 @@ class _HomeState extends State<Register> {
                               //validate all form text field
                               if (_formKey.currentState.validate()) {
                                 //check if exists
-                                final QuerySnapshot result = await Firestore
+                                QuerySnapshot result = await Firestore
                                     .instance.collection('users').where(
                                     'ph_num', isEqualTo: _phnum)
                                     .limit(1)
                                     .getDocuments();
-                                final List <DocumentSnapshot> documents = result.documents;
+                                List <DocumentSnapshot> documents = result.documents;
                                 if (documents.length == 1) {
                                   print('user exists.');
                                   showDialog(context: context,
@@ -264,18 +271,7 @@ class _HomeState extends State<Register> {
                                       });
                                 }
                                 else {
-                                  registerUser(
-                                      _name, _phnum, _email, _idnum, context);
-                                  await db.collection("users")
-                                      .document('$_uid')
-                                      .setData(
-                                      {
-                                        'name': _name,
-                                        'ph_num': _phnum,
-                                        'email': _email,
-                                        'idnum': _idnum
-                                      });
-                                  print('register user complete.');
+                                  await registerUser(_name, _phnum, _email, _idnum, context);
                                 }
                               }
                             },
@@ -306,8 +302,8 @@ class _HomeState extends State<Register> {
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
