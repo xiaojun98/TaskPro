@@ -2,6 +2,7 @@ import 'dart:ffi';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Task {
+  String id;
   DocumentReference createdBy;
   DateTime createdAt;
   DocumentReference updatedBy;
@@ -21,4 +22,6 @@ class Task {
   DocumentReference offeredBy;
   bool isCompleteByAuthor = false;
   bool isCompleteByProvider = false;
+  int offerNum;
+  double rating;
 }

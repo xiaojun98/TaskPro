@@ -24,15 +24,15 @@ class _HomeState extends State<MainNavigation> {
   int _currentIndex = 0;
   FirebaseUser user;
   _HomeState(this.user);
-  final tabs = [
-    Timeline(),
-    MyTask(),
-    null,
-    MySchedule(),
-    Account(),
-  ];
   @override
   Widget build(BuildContext context) {
+    final tabs = [
+      Timeline(),
+      MyTask(user: user,),
+      null,
+      MySchedule(),
+      Account(),
+    ];
     return Scaffold(
         body : tabs[_currentIndex],
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -40,7 +40,7 @@ class _HomeState extends State<MainNavigation> {
           onPressed:(){
             Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => CreateTask()));
+                MaterialPageRoute(builder: (context) => CreateTask(user: user,)));
           },
           tooltip: 'Create Task',
           child: new Icon(Icons.add),
