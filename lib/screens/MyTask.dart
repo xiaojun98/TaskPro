@@ -76,7 +76,7 @@ class _HomeState extends State<MyTask> {
                     task.rating = doc.data['rating'];
                     taskList.add(task);
                   }
-                  return TaskListView(tab: 'Published', taskList: taskList,);
+                  return TaskListView(user: user, tab: 'Published', taskList: taskList,);
                 }
               },
             ),
@@ -124,7 +124,7 @@ class _HomeState extends State<MyTask> {
                         task.rating = doc.data['rating'];
                         taskList.add(task);
                       }
-                      return TaskListView(tab: 'Offered', taskList: taskList,);
+                      return TaskListView(user: user, tab: 'Offered', taskList: taskList,);
                     },
                   );
                 }
@@ -174,7 +174,7 @@ class _HomeState extends State<MyTask> {
                         task.rating = doc.data['rating'];
                         taskList.add(task);
                       }
-                      return TaskListView(tab: 'Bookmark', taskList: taskList,);
+                      return TaskListView(user: user, tab: 'Bookmark', taskList: taskList,);
                     },
                   );
                 }
@@ -217,7 +217,7 @@ class _HomeState extends State<MyTask> {
                     task.rating = doc.data['rating'];
                     taskList.add(task);
                   }
-                  return TaskListView(tab: 'History', taskList: taskList,);
+                  return TaskListView(user: user, tab: 'History', taskList: taskList,);
                 }
               },
             ),
@@ -229,16 +229,18 @@ class _HomeState extends State<MyTask> {
 }
 
 class TaskListView extends StatefulWidget {
+  FirebaseUser user;
   final String tab;
   final List<Task> taskList;
-  TaskListView({Key key, this.tab, this.taskList});
-  _TaskListViewState createState() => _TaskListViewState(tab, taskList);
+  TaskListView({Key key, this.user, this.tab, this.taskList});
+  _TaskListViewState createState() => _TaskListViewState(user, tab, taskList);
 }
 
 class _TaskListViewState extends State<TaskListView> {
+  FirebaseUser user;
   final String tab;
   final List<Task> taskList;
-  _TaskListViewState(this.tab, this.taskList);
+  _TaskListViewState(this.user, this.tab, this.taskList);
   final STATUS = [
     {'id': 0, 'text': Text('Published',style:TextStyle(fontWeight: FontWeight.bold,fontSize:13,color: Colors.blueAccent),), 'icon': Icon(Icons.check_circle,color: Colors.blueAccent,size: 32,)},
     {'id': 1, 'text': Text('Open',style:TextStyle(fontWeight: FontWeight.bold,fontSize:13,color: Colors.blueAccent),), 'icon': Icon(Icons.check_circle,color: Colors.blueAccent,size: 32,)},
@@ -286,7 +288,7 @@ class _TaskListViewState extends State<TaskListView> {
                 onTap: (){
                   Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => MySingleTaskView()));
+                      MaterialPageRoute(builder: (context) => MySingleTaskView(user: user, task: taskList[index],)));
                 },
                 isThreeLine: true,
                 leading: Container(
@@ -387,7 +389,7 @@ class _TaskListViewState extends State<TaskListView> {
               onTap: (){
                 Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => MySingleTaskView()));
+                    MaterialPageRoute(builder: (context) => MySingleTaskView(user: user, task: taskList[index],)));
               },
               leading: STATUS[statusId]['icon'],
               title: Text(taskList[index].title),

@@ -11,13 +11,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class CreateTask extends StatefulWidget {
   FirebaseUser user;
-  CreateTask({this.user});
-  _HomeState createState() => _HomeState(user);
+  Task task;
+  CreateTask({this.user, this.task});
+  _HomeState createState() => _HomeState(user, task);
 }
 
 class _HomeState extends State<CreateTask> {
   FirebaseUser user;
-  _HomeState(this.user);
+  Task task;
+  _HomeState(this.user, this.task);
   TextStyle _style = TextStyle(fontFamily: 'OpenSans-R',fontSize: 16,);
   DateTime now = DateTime.now();
   final _keyLoader = GlobalKey<State>();
@@ -30,7 +32,6 @@ class _HomeState extends State<CreateTask> {
   TextEditingController _tagsInputController = new TextEditingController();
   TextEditingController _locationInputController = new TextEditingController();
   TextEditingController _feeInputController = new TextEditingController();
-  Task newTask = new Task();
 
   Widget _buildAboutDialog(BuildContext context){
     return new AlertDialog(
@@ -56,16 +57,27 @@ class _HomeState extends State<CreateTask> {
 
   @override
   Widget build(BuildContext context) {
-    if(newTask.dateTime == null){
-      newTask.dateTime = now;
+    if(task.dateTime == null) {
+      task.dateTime = now;
     }
+    if(task.status!=null) {
+      _titleInputController.text = task.title;
+      _descriptionInputController.text = task.description;
+      _additionalInstructionInputController.text = task.additionalInstruction;
+      _tagsInputController.text = task.tags;
+      _locationInputController.text = task.location;
+      _feeInputController.text = task.fee.toStringAsFixed(2);
+      if(task.dateTime.isBefore(now))
+        task.dateTime = now;
+    }
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title : Text('Create A Task'),
+        title : Text(task.status==null||task.status=='Draft' ? 'Create A Task' : 'Edit Task Detail'),
         elevation: 0.0,
         backgroundColor: Colors.amberAccent[400],
-        actions: <Widget>[
+        actions: task.status==null||task.status=='Draft' ? <Widget>[
           IconButton(
             icon : Icon(Icons.folder),
             tooltip: 'Drafts',
@@ -87,43 +99,35 @@ class _HomeState extends State<CreateTask> {
                         } else {
                           List<SimpleDialogOption> draftItems = [];
                           for (DocumentSnapshot doc in snapshot.data.documents) {
-                            Task task = new Task();
-                            task.id = doc.data['id'];
-                            task.createdBy = doc.data['created_by'];
-                            task.createdAt = doc.data['created_at']?.toDate();
-                            task.updatedBy = doc.data['updated_by'];
-                            task.updatedAt = doc.data['updated_at']?.toDate();
-                            task.author = doc.data['author'];
-                            task.serviceProvider = doc.data['service_provider'];
-                            task.category = doc.data['category'];
-                            task.title = doc.data['title'];
-                            task.description = doc.data['description'];
-                            task.additionalInstruction = doc.data['additional_instruction'];
-                            task.tags = doc.data['tags'];
-                            task.dateTime = doc.data['date_time'].toDate();
-                            if(task.dateTime.isBefore(now))
-                              task.dateTime = now;
-                            task.location = doc.data['location'];
-                            task.fee = doc.data['fee'];
-                            task.payment = doc.data['payment'];
-                            task.status = doc.data['status'];
-                            task.offeredBy = doc.data['offered_by'];
-                            task.isCompleteByAuthor = doc.data['is_complete_by_author'];
-                            task.isCompleteByProvider = doc.data['is_complete_by_provider'];
-                            task.offerNum = doc.data['offer_num'];
-                            task.rating = doc.data['rating'];
+                            Task draft = new Task();
+                            draft.id = doc.data['id'];
+                            draft.createdBy = doc.data['created_by'];
+                            draft.createdAt = doc.data['created_at']?.toDate();
+                            draft.updatedBy = doc.data['updated_by'];
+                            draft.updatedAt = doc.data['updated_at']?.toDate();
+                            draft.author = doc.data['author'];
+                            draft.serviceProvider = doc.data['service_provider'];
+                            draft.category = doc.data['category'];
+                            draft.title = doc.data['title'];
+                            draft.description = doc.data['description'];
+                            draft.additionalInstruction = doc.data['additional_instruction'];
+                            draft.tags = doc.data['tags'];
+                            draft.dateTime = doc.data['date_time'].toDate();
+                            draft.location = doc.data['location'];
+                            draft.fee = doc.data['fee'];
+                            draft.payment = doc.data['payment'];
+                            draft.status = doc.data['status'];
+                            draft.offeredBy = doc.data['offered_by'];
+                            draft.isCompleteByAuthor = doc.data['is_complete_by_author'];
+                            draft.isCompleteByProvider = doc.data['is_complete_by_provider'];
+                            draft.offerNum = doc.data['offer_num'];
+                            draft.rating = doc.data['rating'];
                             draftItems.add(
                                 SimpleDialogOption(
                                   child: Text(doc.data['title']),
                                   onPressed: () {
                                     setState(() {
-                                      newTask = task;
-                                      _titleInputController.text = task.title;
-                                      _descriptionInputController.text = task.description;
-                                      _additionalInstructionInputController.text = task.additionalInstruction;
-                                      _tagsInputController.text = task.tags;
-                                      _locationInputController.text = task.location;
-                                      _feeInputController.text = task.fee.toStringAsFixed(2);
+                                      task = draft;
                                     });
                                     Navigator.of(context).pop();
                                   },
@@ -140,7 +144,7 @@ class _HomeState extends State<CreateTask> {
                 }
               );
             },),
-        ],
+        ] : [],
       ),
       body: SingleChildScrollView(
         child: Container(
@@ -190,11 +194,11 @@ class _HomeState extends State<CreateTask> {
                                             items: catrgoryItems,
                                             onChanged: (category) {
                                               setState(() {
-                                                newTask.category = category;
+                                                task.category = category;
                                                 state.didChange(category);
                                               });
                                             },
-                                            value: newTask.category,
+                                            value: task.category,
                                             hint: Text(
                                               'Select a category',
                                               style: TextStyle(
@@ -208,7 +212,7 @@ class _HomeState extends State<CreateTask> {
                                     );
                                   },
                                   validator: (value) {
-                                    if(newTask.category == null) {
+                                    if(task.category == null) {
                                       _validateCategory = true;
                                       return '    Please select a category';
                                     } else {
@@ -237,7 +241,7 @@ class _HomeState extends State<CreateTask> {
                             )),
                         controller: _titleInputController,
                         validator: (value) => value.isEmpty ? 'Please enter title for the task' : null,
-                        onSaved: (value) => newTask.title = value,
+                        onSaved: (value) => task.title = value,
                       ),
                     ),
                     Text('Description',style: _style),
@@ -257,7 +261,7 @@ class _HomeState extends State<CreateTask> {
                         minLines: 3,
                         controller: _descriptionInputController,
                         validator: (value) => value.isEmpty ? 'Please enter description for the task' : null,
-                        onSaved: (value) => newTask.description = value,
+                        onSaved: (value) => task.description = value,
                       ),
                     ),
                     Text('Additional Instructions',style: _style),
@@ -276,7 +280,7 @@ class _HomeState extends State<CreateTask> {
                         maxLines: null,
                         minLines: 3,
                         controller: _additionalInstructionInputController,
-                        onSaved: (value) => value.isEmpty ? null : newTask.additionalInstruction = value,
+                        onSaved: (value) => value.isEmpty ? null : task.additionalInstruction = value,
                       ),
                     ),
                     Text('Tag(s)',style: _style),
@@ -292,7 +296,7 @@ class _HomeState extends State<CreateTask> {
                                 fontSize: 14
                             )),
                         controller: _tagsInputController,
-                        onSaved: (value) => value.isEmpty ? null : newTask.tags = value,
+                        onSaved: (value) => value.isEmpty ? null : task.tags = value,
                       ),
                     ),
                     Text('Date & Time',style: _style),
@@ -321,7 +325,7 @@ class _HomeState extends State<CreateTask> {
                                     ),
                                     SizedBox(width: 10),
                                     Text(
-                                      DateFormat('yyyy-MM-dd').format(newTask.dateTime),
+                                      DateFormat('yyyy-MM-dd').format(task.dateTime),
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 18.0),
@@ -332,12 +336,12 @@ class _HomeState extends State<CreateTask> {
                               onPressed: (){
                                 showDatePicker(
                                   context: context,
-                                  initialDate: newTask.dateTime,
+                                  initialDate: task.dateTime,
                                   firstDate: now,
                                   lastDate: now.add(new Duration(days: 365)),
                                 ).then((date){
                                   setState(() {
-                                    newTask.dateTime = date;
+                                    task.dateTime = date;
                                   });
                                 });
                               },
@@ -366,7 +370,7 @@ class _HomeState extends State<CreateTask> {
                                     ),
                                     SizedBox(width: 10),
                                     Text(
-                                      DateFormat.jm().format(newTask.dateTime),
+                                      DateFormat.jm().format(task.dateTime),
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 18.0),
@@ -377,10 +381,10 @@ class _HomeState extends State<CreateTask> {
                               onPressed: (){
                                 showTimePicker(
                                   context: context,
-                                  initialTime: TimeOfDay.fromDateTime(newTask.dateTime),
+                                  initialTime: TimeOfDay.fromDateTime(task.dateTime),
                                 ).then((time){
                                   setState(() {
-                                    newTask.dateTime = DateTime(newTask.dateTime.year, newTask.dateTime.month, newTask.dateTime.day, time.hour, time.minute);;
+                                    task.dateTime = DateTime(task.dateTime.year, task.dateTime.month, task.dateTime.day, time.hour, time.minute);;
                                   });
                                 });
                               },
@@ -401,7 +405,7 @@ class _HomeState extends State<CreateTask> {
                                 fontSize: 14
                             )),
                         controller: _locationInputController,
-                        onSaved: (value) => value.isEmpty ? null : newTask.location = value,
+                        onSaved: (value) => value.isEmpty ? null : task.location = value,
                       ),
                     ),
                     Text('Fee',style: _style),
@@ -410,7 +414,7 @@ class _HomeState extends State<CreateTask> {
                       child: MoneyTextFormField(
                           settings: MoneyTextFormFieldSettings(
                             controller: _feeInputController,
-                            moneyFormatSettings: MoneyFormatSettings(amount : 0.00 ,currencySymbol: 'RM',thousandSeparator: ','),
+                            moneyFormatSettings: MoneyFormatSettings(amount : task.status!=null ? double.parse(_feeInputController.text) : 0.00 ,currencySymbol: 'RM',thousandSeparator: ','),
                             inputFormatters: [WhitelistingTextInputFormatter(RegExp(r"^\d*\.?\d*"))],
                             validator: (value) {
                               if(value.isEmpty) {
@@ -418,7 +422,7 @@ class _HomeState extends State<CreateTask> {
                               } else if(double.parse(value)<=0) {
                                 return 'Amount should be more than RM0';
                               } else {
-                                newTask.fee = double.parse(value);
+                                task.fee = double.parse(value);
                                 return null;
                               }
                             },
@@ -430,23 +434,23 @@ class _HomeState extends State<CreateTask> {
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
-                children: <Widget>[
+                children: task.status==null||task.status=='Draft' ? <Widget>[
                   FlatButton(
                     onPressed: (){
                       if(_formKey.currentState.validate()) {
                         LoadingDialog.showLoadingDialog(context, _keyLoader, "Saving as draft...");
                         _formKey.currentState.save();
-                        if(newTask.id!=null) {
-                          Firestore.instance.collection('task').document(newTask.id).updateData({
+                        if(task.id!=null) {
+                          Firestore.instance.collection('task').document(task.id).updateData({
                             'created_at': DateTime.now(),
-                            'category': newTask.category,
-                            'title': newTask.title,
-                            'description': newTask.description,
-                            'additional_instruction': newTask.additionalInstruction,
-                            'tags': newTask.tags,
-                            'date_time': newTask.dateTime,
-                            'location': newTask.location,
-                            'fee': newTask.fee,
+                            'category': task.category,
+                            'title': task.title,
+                            'description': task.description,
+                            'additional_instruction': task.additionalInstruction,
+                            'tags': task.tags,
+                            'date_time': task.dateTime,
+                            'location': task.location,
+                            'fee': task.fee,
                           }).then((value) {
                             Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                             Navigator.pop(context);
@@ -457,25 +461,25 @@ class _HomeState extends State<CreateTask> {
                             'id': ref.documentID,
                             'created_by': Firestore.instance.document('users/'+user.uid),
                             'created_at': DateTime.now(),
-                            'updated_by': newTask.updatedBy,
-                            'updated_at': newTask.updatedAt,
+                            'updated_by': task.updatedBy,
+                            'updated_at': task.updatedAt,
                             'author': {'name':user.displayName, 'profile_pic': user.photoUrl},
-                            'service_provider': newTask.serviceProvider,
-                            'category': newTask.category,
-                            'title': newTask.title,
-                            'description': newTask.description,
-                            'additional_instruction': newTask.additionalInstruction,
-                            'tags': newTask.tags,
-                            'date_time': newTask.dateTime,
-                            'location': newTask.location,
-                            'fee': newTask.fee,
-                            'payment': newTask.payment,
+                            'service_provider': task.serviceProvider,
+                            'category': task.category,
+                            'title': task.title,
+                            'description': task.description,
+                            'additional_instruction': task.additionalInstruction,
+                            'tags': task.tags,
+                            'date_time': task.dateTime,
+                            'location': task.location,
+                            'fee': task.fee,
+                            'payment': task.payment,
                             'status': 'Draft',
-                            'offered_by': newTask.offeredBy,
-                            'is_complete_by_author': newTask.isCompleteByAuthor,
-                            'is_complete_by_provider': newTask.isCompleteByProvider,
+                            'offered_by': task.offeredBy,
+                            'is_complete_by_author': task.isCompleteByAuthor,
+                            'is_complete_by_provider': task.isCompleteByProvider,
                             'offer_num': 0,
-                            'rating': newTask.rating,
+                            'rating': task.rating,
                           }).then((value) {
                             Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                             Navigator.pop(context);
@@ -501,17 +505,17 @@ class _HomeState extends State<CreateTask> {
                       if(_formKey.currentState.validate()) {
                         LoadingDialog.showLoadingDialog(context, _keyLoader, "Publishing task...");
                         _formKey.currentState.save();
-                        if(newTask.id!=null) {
-                          Firestore.instance.collection('task').document(newTask.id).updateData({
+                        if(task.id!=null) {
+                          Firestore.instance.collection('task').document(task.id).updateData({
                             'created_at': DateTime.now(),
-                            'category': newTask.category,
-                            'title': newTask.title,
-                            'description': newTask.description,
-                            'additional_instruction': newTask.additionalInstruction,
-                            'tags': newTask.tags,
-                            'date_time': newTask.dateTime,
-                            'location': newTask.location,
-                            'fee': newTask.fee,
+                            'category': task.category,
+                            'title': task.title,
+                            'description': task.description,
+                            'additional_instruction': task.additionalInstruction,
+                            'tags': task.tags,
+                            'date_time': task.dateTime,
+                            'location': task.location,
+                            'fee': task.fee,
                             'status': 'Open',
                           }).then((value) {
                             Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
@@ -523,36 +527,65 @@ class _HomeState extends State<CreateTask> {
                             'id': ref.documentID,
                             'created_by': Firestore.instance.document('users/'+user.uid),
                             'created_at': DateTime.now(),
-                            'updated_by': newTask.updatedBy,
-                            'updated_at': newTask.updatedAt,
+                            'updated_by': task.updatedBy,
+                            'updated_at': task.updatedAt,
                             'author': {'name':user.displayName, 'profile_pic': user.photoUrl},
-                            'service_provider': newTask.serviceProvider,
-                            'category': newTask.category,
-                            'title': newTask.title,
-                            'description': newTask.description,
-                            'additional_instruction': newTask.additionalInstruction,
-                            'tags': newTask.tags,
-                            'date_time': newTask.dateTime,
-                            'location': newTask.location,
-                            'fee': newTask.fee,
-                            'payment': newTask.payment,
+                            'service_provider': task.serviceProvider,
+                            'category': task.category,
+                            'title': task.title,
+                            'description': task.description,
+                            'additional_instruction': task.additionalInstruction,
+                            'tags': task.tags,
+                            'date_time': task.dateTime,
+                            'location': task.location,
+                            'fee': task.fee,
+                            'payment': task.payment,
                             'status': 'Open',
-                            'offered_by': newTask.offeredBy,
-                            'is_complete_by_author': newTask.isCompleteByAuthor,
-                            'is_complete_by_provider': newTask.isCompleteByProvider,
+                            'offered_by': task.offeredBy,
+                            'is_complete_by_author': task.isCompleteByAuthor,
+                            'is_complete_by_provider': task.isCompleteByProvider,
                             'offer_num': 0,
-                            'rating': newTask.rating,
+                            'rating': task.rating,
                           }).then((value) {
                             Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                             Navigator.pop(context);
                           });
                         }
-
                       } else {
                         setState(() => _autoValidate = true);
                       }
                     },
                     child: Text ('Publish',
+                      style: TextStyle(fontSize: 16,color: Colors.black,fontFamily: 'OpenSansR'),),
+                    shape: new RoundedRectangleBorder(borderRadius: new BorderRadius.circular(30.0)),
+                    color: Colors.amber,
+                  ),
+                ] : [
+                  FlatButton(
+                    onPressed: (){
+                      if(_formKey.currentState.validate()) {
+                        LoadingDialog.showLoadingDialog(context, _keyLoader, "Saving changes...");
+                        _formKey.currentState.save();
+                        Firestore.instance.collection('task').document(task.id).updateData({
+                          'updated_by': Firestore.instance.document('users/'+user.uid),
+                          'updated_at': DateTime.now(),
+                          'category': task.category,
+                          'title': task.title,
+                          'description': task.description,
+                          'additional_instruction': task.additionalInstruction,
+                          'tags': task.tags,
+                          'date_time': task.dateTime,
+                          'location': task.location,
+                          'fee': task.fee,
+                        }).then((value) {
+                          Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
+                          Navigator.pop(context);
+                        });
+                      } else {
+                        setState(() => _autoValidate = true);
+                      }
+                    },
+                    child: Text ('Save Changes',
                       style: TextStyle(fontSize: 16,color: Colors.black,fontFamily: 'OpenSansR'),),
                     shape: new RoundedRectangleBorder(borderRadius: new BorderRadius.circular(30.0)),
                     color: Colors.amber,
