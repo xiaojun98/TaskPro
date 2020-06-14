@@ -7,6 +7,7 @@ import 'package:path/path.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:testapp/models/Profile.dart';
+import 'package:testapp/services/loadingDialog.dart';
 
 class EditProfile extends StatefulWidget {
   final FirebaseUser user;
@@ -32,13 +33,14 @@ class _HomeState extends State<EditProfile> {
   String _achievement;
   String _services;
 
-  TextEditingController _nameController = TextEditingController();
-  TextEditingController _emailController = TextEditingController();
-  TextEditingController _aboutController = TextEditingController();
-  TextEditingController _achievementController = TextEditingController();
-  TextEditingController _servicesController = TextEditingController();
+  TextEditingController _nameController = new TextEditingController();
+  TextEditingController _emailController = new TextEditingController();
+  TextEditingController _aboutController = new TextEditingController();
+  TextEditingController _achievementController = new TextEditingController();
+  TextEditingController _servicesController = new TextEditingController();
 
   final GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
+  final _keyLoader = GlobalKey<State>();
 
 
   Future getImage() async {
@@ -58,11 +60,15 @@ class _HomeState extends State<EditProfile> {
     StorageTaskSnapshot taskSnapshot=await uploadTask.onComplete.catchError((e){print(e.toString());});
     await firebaseStorageRef.getDownloadURL().then((val) async{
       _profilePicPath = val;
+      LoadingDialog.showLoadingDialog(context, _keyLoader, "Uploading..");
       await db.collection("profile").document(user.uid).updateData({
         'profile_pic' : val,
-      });
+      }).then((val){
+        Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
+        Navigator.pop(context);});
     }).catchError((e){print(e.toString());});
   }
+
 
   Future _updateProfile(BuildContext context,String name,String email,String about,String achievement,String services) async{
     await db.collection("profile").document(user.uid).updateData({
@@ -71,12 +77,7 @@ class _HomeState extends State<EditProfile> {
       'about' : about,
       'achievement' : achievement,
       'services' : services,
-    }).catchError((e) {print(e.toString());});
-
-//    setState(() {
-//      print("Profile updated");
-//      Scaffold.of(context).showSnackBar(SnackBar(content: Text('Profile Updated')));
-//    });
+    }).catchError((e) {print(e.toString());}).then((val){print(_services);});
 
   }
 
@@ -97,8 +98,11 @@ class _HomeState extends State<EditProfile> {
 
   Widget build(BuildContext context) {
 
+    if(profile!=null) {
+      getValue();
+    }
 
-    getValue();
+
     return Scaffold(
         appBar: AppBar(title : Text('Edit Profile'),
           centerTitle: true ,
@@ -159,6 +163,7 @@ class _HomeState extends State<EditProfile> {
                     ),
                   ],
                 ),
+                SizedBox(height: 30,),
 
                 Form(
                   key: _formKey,
@@ -185,9 +190,9 @@ class _HomeState extends State<EditProfile> {
                                 fontSize: 12
                             )
                         ),
-                        onChanged: (val) {
-                          setState(() => _name = val);
-                        },
+
+                        onSaved: (val) => _name = val,
+
                       ),
                       SizedBox(height: 20,),
                       Text('Email',style: TextStyle(
@@ -215,9 +220,7 @@ class _HomeState extends State<EditProfile> {
                                 fontSize: 12
                             )
                         ),
-                        onChanged: (val) {
-                          setState(() => _email = val);
-                        },
+                        onSaved: (val) => _email = val,
                       ),
                       SizedBox(height: 20,),
                       Text('About',style: TextStyle(
@@ -242,9 +245,7 @@ class _HomeState extends State<EditProfile> {
                                 fontSize: 12
                             )
                         ),
-                        onChanged: (val) {
-                          setState(() => _about = val);
-                        },
+                        onSaved: (val) => _about = val,
                       ),
                       SizedBox(height: 20,),
                       Text('Achievement',style: TextStyle(
@@ -268,9 +269,7 @@ class _HomeState extends State<EditProfile> {
                                 fontSize: 12
                             )
                         ),
-                        onChanged: (val) {
-                          setState(() => _achievement = val);
-                        },
+                        onSaved: (val) => _achievement = val,
                       ),
                       SizedBox(height: 20,),
                       Text('Services',style: TextStyle(
@@ -294,9 +293,7 @@ class _HomeState extends State<EditProfile> {
                                 fontSize: 12
                             )
                         ),
-                        onChanged: (val) {
-                          setState(() => _services = val);
-                        },
+                        onSaved: (val) => _services = val,
                       ),
                       SizedBox(height: 20,),
                       Row(
@@ -316,7 +313,12 @@ class _HomeState extends State<EditProfile> {
                           OutlineButton(
                             onPressed: () {
                               if (_formKey.currentState.validate()) {
-                                _updateProfile(context,_name, _email, _about, _achievement, _services);
+                                LoadingDialog.showLoadingDialog(context, _keyLoader, "Updating...");
+                                _formKey.currentState.save();
+                                _updateProfile(context,_name, _email, _about, _achievement, _services).then((value) {
+                                  Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
+                                  Navigator.pop(context);
+                                });
                               }
                             },
                             child: Text('Save',
