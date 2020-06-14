@@ -248,6 +248,14 @@ class _HomeState extends State<Register> {
                                               "The number is registered. Please proceed to login."),
                                           actions: <Widget>[
                                             FlatButton(
+                                                child: Text('Cancel'),
+                                                onPressed: () {
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) => Register()));
+                                                }),
+                                            FlatButton(
                                                 child: Text('Login'),
                                                 color: Colors.amber[400],
                                                 onPressed: () {

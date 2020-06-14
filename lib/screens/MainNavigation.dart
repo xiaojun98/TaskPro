@@ -33,7 +33,7 @@ class _HomeState extends State<MainNavigation> {
       MyTask(user: user,),
       null,
       MySchedule(),
-      Account(),
+      Account(user: user),
     ];
     return Scaffold(
         body : tabs[_currentIndex],
