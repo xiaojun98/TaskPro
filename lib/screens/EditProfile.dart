@@ -50,23 +50,24 @@ class _HomeState extends State<EditProfile> {
     });
   }
 
-  Future uploadPic() async{
+  Future uploadPic(context) async{
     String _profilepic = basename(_image.path);
     String folder = user.uid + '/profile';
     StorageReference firebaseStorageRef = FirebaseStorage.instance.ref().child('$folder/$_profilepic');
     StorageUploadTask uploadTask = firebaseStorageRef.putFile(_image);
     StorageTaskSnapshot taskSnapshot=await uploadTask.onComplete.catchError((e){print(e.toString());});
-    await firebaseStorageRef.getDownloadURL().then((val){
+    await firebaseStorageRef.getDownloadURL().then((val) async{
       _profilePicPath = val;
-      print(_profilePicPath);
+      await db.collection("profile").document(user.uid).updateData({
+        'profile_pic' : val,
+      });
     }).catchError((e){print(e.toString());});
   }
 
-  Future _updateProfile(BuildContext context,String uid,String name,String email, String profilePicPath, String about,String achievement,String services) async{
-    await db.collection("profile").document(uid).updateData({
+  Future _updateProfile(BuildContext context,String name,String email,String about,String achievement,String services) async{
+    await db.collection("profile").document(user.uid).updateData({
       'name': name,
       'email' : email,
-      'profile_pic' : profilePicPath,
       'about' : about,
       'achievement' : achievement,
       'services' : services,
@@ -129,18 +130,34 @@ class _HomeState extends State<EditProfile> {
                       ),
                     )
                 ),
-                Container(
-                  margin: EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.amberAccent[400],
-                    borderRadius: BorderRadius.circular(30),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Container(
+                    margin: EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.amberAccent[400],
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: IconButton(
+                        color: Colors.black,
+                        onPressed: (){
+                          getImage();
+                        },
+                        icon : Icon(Icons.camera_alt,)),
                   ),
-                  child: IconButton(
-                      color: Colors.black,
-                      onPressed: (){
-                        getImage();
+                    OutlineButton(
+                      onPressed: () {
+                        uploadPic(context);
                       },
-                      icon : Icon(Icons.file_upload,)),
+                      child: Text('Upload',
+                        style: TextStyle(fontSize: 18,
+                            color: Colors.amberAccent[400],
+                            fontFamily: 'OpenSansR'),),
+                      shape: new RoundedRectangleBorder(
+                          borderRadius: new BorderRadius.circular(30.0)),
+                    ),
+                  ],
                 ),
 
                 Form(
@@ -299,8 +316,7 @@ class _HomeState extends State<EditProfile> {
                           OutlineButton(
                             onPressed: () {
                               if (_formKey.currentState.validate()) {
-                                uploadPic();
-                                _updateProfile(context,user.uid, _name, _email, _profilePicPath, _about, _achievement, _services);
+                                _updateProfile(context,_name, _email, _about, _achievement, _services);
                               }
                             },
                             child: Text('Save',
