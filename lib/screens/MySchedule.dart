@@ -9,11 +9,11 @@ class MySchedule extends StatefulWidget {
 
 class _HomeState extends State<MySchedule> {
   @override
-  List <Task> deadlines = [
-    Task('Help for translation','2020-05-18',0),
-    Task('Urgent child care','2020-05-20',1),
-    Task('Logo Design','2020-05-21',3),
-    Task('Game account training','2020-05-28',0),
+  List <Task_> deadlines = [
+    Task_('Help for translation','2020-05-18',0),
+    Task_('Urgent child care','2020-05-20',1),
+    Task_('Logo Design','2020-05-21',3),
+    Task_('Game account training','2020-05-28',0),
   ];
 
   Widget build(BuildContext context) {
@@ -67,12 +67,12 @@ class _HomeState extends State<MySchedule> {
   }
 }
 
-class Task{
+class Task_{
   int status;
   String taskTitle;
   String deadline;
 
-  Task (String taskTitle,String deadline,int status){
+  Task_ (String taskTitle,String deadline,int status){
     this.taskTitle=taskTitle;
     this.deadline=deadline;
     this.status=status;
