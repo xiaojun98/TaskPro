@@ -4,7 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:testapp/screens/MainNavigation.dart';
 import 'package:testapp/screens/Register.dart';
-import 'package:testapp/services/loadingDialog.dart';
 
 
 class Login extends StatefulWidget{
@@ -16,7 +15,6 @@ class _HomeState extends State<Login> {
   final _codeController = TextEditingController();
   final _phnumController = TextEditingController();
   String _code = '';
-  final _keyLoader = GlobalKey<State>();
   final db = Firestore.instance;
   final _formKey = GlobalKey<FormState>();
 
@@ -61,7 +59,9 @@ class _HomeState extends State<Login> {
                             verificationId: verfId, smsCode: _code);
                         FirebaseUser user;
                         AuthResult result = await _auth.signInWithCredential(credential).catchError((e){
-                          showDialog(child: Text(e.toString()));
+                          showDialog(context: context,child: Text(e.toString(), style : TextStyle(fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'OpenSansR')));
                         });
                         user = result.user;
 

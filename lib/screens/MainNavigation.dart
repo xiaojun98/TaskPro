@@ -6,11 +6,6 @@ import 'CreateTask.dart';
 import 'MySchedule.dart';
 import 'Account.dart';
 
-void main() => runApp(MaterialApp(
-  home : MainNavigation(),
-)
-)
-;
 
 class MainNavigation extends StatefulWidget{
   @override
@@ -24,15 +19,18 @@ class _HomeState extends State<MainNavigation> {
   int _currentIndex = 0;
   FirebaseUser user;
   _HomeState(this.user);
-  final tabs = [
-    Timeline(),
-    MyTask(),
-    null,
-    MySchedule(),
-    Account(),
-  ];
+
   @override
   Widget build(BuildContext context) {
+
+    final tabs = [
+      Timeline(),
+      MyTask(),
+      null,
+      MySchedule(),
+      Account(user: user,),
+    ];
+
     return Scaffold(
         body : tabs[_currentIndex],
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,

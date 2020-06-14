@@ -20,10 +20,17 @@ class _HomeState extends State<Register> {
   final db = Firestore.instance;
   String _code = '';
   String _uid = '';
-
+  String _name = '';
+  String _phnum = '';
+  String _email = '';
+  String _idnum = '';
+  final _nameController = TextEditingController();
+  final _phnumController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _idnumController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   Future <bool> registerUser(String name, String phnum, String email, String idnum, BuildContext context) async {
-    String msg = '';
     FirebaseAuth _auth = FirebaseAuth.instance;
     _auth.verifyPhoneNumber(
         phoneNumber: phnum,
@@ -61,19 +68,16 @@ class _HomeState extends State<Register> {
                         AuthCredential credential = PhoneAuthProvider
                             .getCredential(
                             verificationId: verfId, smsCode: _code);
-                        AuthResult result = await _auth.signInWithCredential(credential).catchError((e){showDialog(child: Text(e.toString()));});
+                        AuthResult result = await _auth.signInWithCredential(credential).catchError((e){showDialog(context: context,child: Text(e.toString(), style : TextStyle(fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'OpenSansR')));});
                         FirebaseUser user = result.user;
                         if (user != null) {
                           LoadingDialog.showLoadingDialog(context, _keyLoader, "Validating...");
                           _uid = user.uid;
-                          await db.collection("users").document(_uid).setData({
-                            'name': _name,
-                            'ph_num': _phnum,
-                            'email': _email,
-                            'idnum': _idnum
-                          }).catchError((e){
+                          await createUser(_uid).catchError((e){
                             print("$e,#in confirm button $_uid");
-                            msg=e.toString();}).then((value){
+                            }).then((value){
                               Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                               Navigator.push(context, MaterialPageRoute(
                                   builder: (context) => MainNavigation(user: user)
@@ -92,19 +96,6 @@ class _HomeState extends State<Register> {
         },
         codeAutoRetrievalTimeout: null);
   }
-
-  final _nameController = TextEditingController();
-  final _phnumController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _idnumController = TextEditingController();
-
-  String _name = '';
-  String _phnum = '';
-  String _email = '';
-  String _idnum = '';
-
-  final _formKey = GlobalKey<FormState>();
-
 
   @override
   Widget build(BuildContext context) {
@@ -307,5 +298,31 @@ class _HomeState extends State<Register> {
         ),
       ),
     );
+  }
+
+  Future<bool> createUser(String _uid) async{
+    await db.collection("users").document(_uid).setData({
+      'name': _name,
+      'ph_num': _phnum,
+      'email': _email,
+      'idnum': _idnum
+    }).then((value) async {
+      await db.collection("profile").document(_uid).setData({
+        'name': _name,
+        'ph_num': _phnum,
+        'email' : _email,
+        'task_completed': 0,
+        'task_posted': 0,
+        'rating' : 0,
+        'review_num' : 0,
+        'isActive' : true,
+        'gallery' : [],
+        'profile_pic' : '',
+        'services' : '',
+        'joined' : new DateTime.now(),
+        'achievement' : '',
+        'about' : '-',
+      });
+    });
   }
 }
