@@ -21,7 +21,6 @@ class _HomeState extends State<CreateTask> {
   Task task;
   _HomeState(this.user, this.task);
   TextStyle _style = TextStyle(fontFamily: 'OpenSans-R',fontSize: 16,);
-  DateTime now = DateTime.now();
   final _keyLoader = GlobalKey<State>();
   final _formKey = GlobalKey<FormState>();
   bool _autoValidate = false;
@@ -57,7 +56,8 @@ class _HomeState extends State<CreateTask> {
 
   @override
   Widget build(BuildContext context) {
-    if(task.dateTime == null) {
+    DateTime now = DateTime.now();
+    if(task.dateTime == null || task.dateTime.isBefore(now)) {
       task.dateTime = now;
     }
     if(task.status!=null) {
@@ -67,8 +67,6 @@ class _HomeState extends State<CreateTask> {
       _tagsInputController.text = task.tags;
       _locationInputController.text = task.location;
       _feeInputController.text = task.fee.toStringAsFixed(2);
-      if(task.dateTime.isBefore(now))
-        task.dateTime = now;
     }
 
     return Scaffold(
@@ -239,6 +237,7 @@ class _HomeState extends State<CreateTask> {
                                 color :Colors.grey,
                                 fontSize: 14
                             )),
+                        maxLength: 30,
                         controller: _titleInputController,
                         validator: (value) => value.isEmpty ? 'Please enter title for the task' : null,
                         onSaved: (value) => task.title = value,
@@ -497,7 +496,7 @@ class _HomeState extends State<CreateTask> {
                   ),
                   SizedBox(width: 20),
                   FlatButton(
-                    onPressed: (){
+                    onPressed: () async {
 //                      showDialog(
 //                        context: context,
 //                        builder: (BuildContext context) => _buildAboutDialog(context),
@@ -519,36 +518,38 @@ class _HomeState extends State<CreateTask> {
                             'status': 'Open',
                           }).then((value) {
                             Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
-                            Navigator.pop(context);
+                            Navigator.pop(context, true);
                           });
                         } else {
-                          DocumentReference ref = Firestore.instance.collection('task').document();
-                          ref.setData({
-                            'id': ref.documentID,
-                            'created_by': Firestore.instance.document('users/'+user.uid),
-                            'created_at': DateTime.now(),
-                            'updated_by': task.updatedBy,
-                            'updated_at': task.updatedAt,
-                            'author': {'name':user.displayName, 'profile_pic': user.photoUrl},
-                            'service_provider': task.serviceProvider,
-                            'category': task.category,
-                            'title': task.title,
-                            'description': task.description,
-                            'additional_instruction': task.additionalInstruction,
-                            'tags': task.tags,
-                            'date_time': task.dateTime,
-                            'location': task.location,
-                            'fee': task.fee,
-                            'payment': task.payment,
-                            'status': 'Open',
-                            'offered_by': task.offeredBy,
-                            'is_complete_by_author': task.isCompleteByAuthor,
-                            'is_complete_by_provider': task.isCompleteByProvider,
-                            'offer_num': 0,
-                            'rating': task.rating,
-                          }).then((value) {
-                            Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
-                            Navigator.pop(context);
+                          await Firestore.instance.collection('profile').document(user.uid).get().then((profile) {
+                            DocumentReference ref = Firestore.instance.collection('task').document();
+                            ref.setData({
+                              'id': ref.documentID,
+                              'created_by': Firestore.instance.document('users/'+user.uid),
+                              'created_at': DateTime.now(),
+                              'updated_by': task.updatedBy,
+                              'updated_at': task.updatedAt,
+                              'author': {'name':profile.data['name'], 'profile_pic': profile.data['profile_pic']},
+                              'service_provider': task.serviceProvider,
+                              'category': task.category,
+                              'title': task.title,
+                              'description': task.description,
+                              'additional_instruction': task.additionalInstruction,
+                              'tags': task.tags,
+                              'date_time': task.dateTime,
+                              'location': task.location,
+                              'fee': task.fee,
+                              'payment': task.payment,
+                              'status': 'Open',
+                              'offered_by': task.offeredBy,
+                              'is_complete_by_author': task.isCompleteByAuthor,
+                              'is_complete_by_provider': task.isCompleteByProvider,
+                              'offer_num': 0,
+                              'rating': task.rating,
+                            }).then((value) {
+                              Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
+                              Navigator.pop(context, true);
+                            });
                           });
                         }
                       } else {
@@ -579,7 +580,7 @@ class _HomeState extends State<CreateTask> {
                           'fee': task.fee,
                         }).then((value) {
                           Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
-                          Navigator.pop(context);
+                          Navigator.pop(context, true);
                         });
                       } else {
                         setState(() => _autoValidate = true);

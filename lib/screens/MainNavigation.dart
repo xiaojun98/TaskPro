@@ -29,7 +29,7 @@ class _HomeState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     final tabs = [
-      Timeline(),
+      Timeline(user: user,),
       MyTask(user: user,),
       null,
       MySchedule(),
@@ -39,10 +39,12 @@ class _HomeState extends State<MainNavigation> {
         body : tabs[_currentIndex],
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         floatingActionButton: new FloatingActionButton(
-          onPressed:(){
-            Navigator.push(
+          onPressed:() async {
+            await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => CreateTask(user: user, task: newTask,)));
+                MaterialPageRoute(builder: (context) => CreateTask(user: user, task: newTask,))
+            );
+            setState(() {});
           },
           tooltip: 'Create Task',
           child: new Icon(Icons.add),

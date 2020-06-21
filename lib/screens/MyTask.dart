@@ -66,7 +66,7 @@ class _HomeState extends State<MyTask> {
                     task.tags = doc.data['tags'];
                     task.dateTime = doc.data['date_time']?.toDate();
                     task.location = doc.data['location'];
-                    task.fee = doc.data['fee'];
+                    task.fee = double.parse(doc.data['fee'].toString());
                     task.payment = doc.data['payment'];
                     task.status = doc.data['status'];
                     task.offeredBy = doc.data['offered_by'];
@@ -95,7 +95,7 @@ class _HomeState extends State<MyTask> {
                     stream: Firestore.instance.collection('task').where('id', whereIn: taskIdList).snapshots(),
                     builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
                       if(!snapshot.hasData) {
-                        return CircularProgressIndicator(valueColor: new AlwaysStoppedAnimation<Color>(Colors.amber[800]),);
+                        return Center(child: Text('No bookmark found.', style: TextStyle(color: Colors.grey),),);
                       }
                       List<Task> taskList = [];
                       for (DocumentSnapshot doc in snapshot.data.documents) {
@@ -114,7 +114,7 @@ class _HomeState extends State<MyTask> {
                         task.tags = doc.data['tags'];
                         task.dateTime = doc.data['date_time']?.toDate();
                         task.location = doc.data['location'];
-                        task.fee = doc.data['fee'];
+                        task.fee = double.parse(doc.data['fee'].toString());
                         task.payment = doc.data['payment'];
                         task.status = doc.data['status'];
                         task.offeredBy = doc.data['offered_by'];
@@ -145,7 +145,7 @@ class _HomeState extends State<MyTask> {
                     stream: Firestore.instance.collection('task').where('id', whereIn: taskIdList).snapshots(),
                     builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
                       if(!snapshot.hasData) {
-                        return CircularProgressIndicator(valueColor: new AlwaysStoppedAnimation<Color>(Colors.amber[800]),);
+                        return Center(child: Text('No bookmark found.', style: TextStyle(color: Colors.grey),),);
                       }
                       List<Task> taskList = [];
                       for (DocumentSnapshot doc in snapshot.data.documents) {
@@ -164,7 +164,7 @@ class _HomeState extends State<MyTask> {
                         task.tags = doc.data['tags'];
                         task.dateTime = doc.data['date_time']?.toDate();
                         task.location = doc.data['location'];
-                        task.fee = doc.data['fee'];
+                        task.fee = double.parse(doc.data['fee'].toString());
                         task.payment = doc.data['payment'];
                         task.status = doc.data['status'];
                         task.offeredBy = doc.data['offered_by'];
@@ -183,9 +183,9 @@ class _HomeState extends State<MyTask> {
             // history tab
             StreamBuilder<QuerySnapshot>(
               stream: Firestore.instance.collection('task')
+                  .orderBy('created_at', descending: true)
                   .where('created_by', isEqualTo: Firestore.instance.collection('users').document(user.uid))
-                  .where('status', whereIn: ['Completed','Cancelled','Expired'])
-                  .orderBy('created_at', descending: true).snapshots(),
+                  .where('status', whereIn: ['Completed','Cancelled','Expired']).snapshots(),
               builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
                 if(!snapshot.hasData) {
                   return Center(child: Text('No task history found.', style: TextStyle(color: Colors.grey),),);
@@ -207,7 +207,7 @@ class _HomeState extends State<MyTask> {
                     task.tags = doc.data['tags'];
                     task.dateTime = doc.data['date_time']?.toDate();
                     task.location = doc.data['location'];
-                    task.fee = doc.data['fee'];
+                    task.fee = double.parse(doc.data['fee'].toString());
                     task.payment = doc.data['payment'];
                     task.status = doc.data['status'];
                     task.offeredBy = doc.data['offered_by'];
@@ -285,10 +285,12 @@ class _TaskListViewState extends State<TaskListView> {
             int statusId = taskList[index].status == statusIdCond ? statusId1 : statusId2;
             return Card(
               child: ListTile(
-                onTap: (){
-                  Navigator.push(
+                onTap: () async {
+                  await Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => MySingleTaskView(user: user, task: taskList[index],)));
+                      MaterialPageRoute(builder: (context) => MySingleTaskView(user: user, task: taskList[index],))
+                  );
+                  setState(() {});
                 },
                 isThreeLine: true,
                 leading: Container(
@@ -304,7 +306,7 @@ class _TaskListViewState extends State<TaskListView> {
                 ),
                 title: Container(
                   padding: EdgeInsets.symmetric(vertical: 5,),
-                  child: Text(taskList[index].title, style: TextStyle(fontWeight: FontWeight.bold),),
+                  child: Text(taskList[index].title, style: TextStyle(fontWeight: FontWeight.bold), maxLines: 1,  overflow: TextOverflow.ellipsis,),
                 ),
                 subtitle: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -386,13 +388,15 @@ class _TaskListViewState extends State<TaskListView> {
           }
           return Card(
             child: ListTile(
-              onTap: (){
-                Navigator.push(
+              onTap: () async {
+                await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => MySingleTaskView(user: user, task: taskList[index],)));
+                    MaterialPageRoute(builder: (context) => MySingleTaskView(user: user, task: taskList[index],))
+                );
+                setState(() {});
               },
               leading: STATUS[statusId]['icon'],
-              title: Text(taskList[index].title),
+              title: Text(taskList[index].title, maxLines: 1,  overflow: TextOverflow.ellipsis,),
               trailing: STATUS[statusId]['text'],
             ),
           );
