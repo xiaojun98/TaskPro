@@ -15,6 +15,8 @@ class Profile{
   String rating = '';
   List gallery = [];
 
+  Profile.empty() {}
+
   Profile(AsyncSnapshot<DocumentSnapshot> ds){
     this.name = ds.data["name"];
     this.email = ds.data["email"];
