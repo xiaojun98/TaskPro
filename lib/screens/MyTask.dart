@@ -183,7 +183,7 @@ class _HomeState extends State<MyTask> {
             // history tab
             StreamBuilder<QuerySnapshot>(
               stream: Firestore.instance.collection('task')
-                  .orderBy('created_at', descending: true)
+                  //.orderBy('created_at', descending: true)
                   .where('created_by', isEqualTo: Firestore.instance.collection('users').document(user.uid))
                   .where('status', whereIn: ['Completed','Cancelled','Expired']).snapshots(),
               builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
@@ -322,7 +322,7 @@ class _TaskListViewState extends State<TaskListView> {
                       children: [
                         Icon(Icons.location_on, color: Colors.grey, size: 16,),
                         SizedBox(width: 5,),
-                        Text(taskList[index].location!=null ? taskList[index].location : '-',),
+                        Text((taskList[index].location!=null && taskList[index].location!='') ? taskList[index].location : '-',),
                       ],
                     ),
                     Row(

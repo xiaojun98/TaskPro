@@ -24,7 +24,6 @@ class MainNavigation extends StatefulWidget{
 class _HomeState extends State<MainNavigation> {
   int _currentIndex = 0;
   FirebaseUser user;
-  Task newTask = new Task();
   _HomeState(this.user);
   @override
   Widget build(BuildContext context) {
@@ -40,6 +39,7 @@ class _HomeState extends State<MainNavigation> {
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         floatingActionButton: new FloatingActionButton(
           onPressed:() async {
+            Task newTask = new Task();
             await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => CreateTask(user: user, task: newTask,))

@@ -240,7 +240,6 @@ class _HomeState extends State<CreateTask> {
                         maxLength: 30,
                         controller: _titleInputController,
                         validator: (value) => value.isEmpty ? 'Please enter title for the task' : null,
-                        onSaved: (value) => task.title = value,
                       ),
                     ),
                     Text('Description',style: _style),
@@ -260,7 +259,6 @@ class _HomeState extends State<CreateTask> {
                         minLines: 3,
                         controller: _descriptionInputController,
                         validator: (value) => value.isEmpty ? 'Please enter description for the task' : null,
-                        onSaved: (value) => task.description = value,
                       ),
                     ),
                     Text('Additional Instructions',style: _style),
@@ -279,7 +277,6 @@ class _HomeState extends State<CreateTask> {
                         maxLines: null,
                         minLines: 3,
                         controller: _additionalInstructionInputController,
-                        onSaved: (value) => value.isEmpty ? null : task.additionalInstruction = value,
                       ),
                     ),
                     Text('Tag(s)',style: _style),
@@ -295,7 +292,6 @@ class _HomeState extends State<CreateTask> {
                                 fontSize: 14
                             )),
                         controller: _tagsInputController,
-                        onSaved: (value) => value.isEmpty ? null : task.tags = value,
                       ),
                     ),
                     Text('Date & Time',style: _style),
@@ -404,7 +400,6 @@ class _HomeState extends State<CreateTask> {
                                 fontSize: 14
                             )),
                         controller: _locationInputController,
-                        onSaved: (value) => value.isEmpty ? null : task.location = value,
                       ),
                     ),
                     Text('Fee',style: _style),
@@ -421,7 +416,6 @@ class _HomeState extends State<CreateTask> {
                               } else if(double.parse(value)<=0) {
                                 return 'Amount should be more than RM0';
                               } else {
-                                task.fee = double.parse(value);
                                 return null;
                               }
                             },
@@ -438,18 +432,17 @@ class _HomeState extends State<CreateTask> {
                     onPressed: (){
                       if(_formKey.currentState.validate()) {
                         LoadingDialog.showLoadingDialog(context, _keyLoader, "Saving as draft...");
-                        _formKey.currentState.save();
                         if(task.id!=null) {
                           Firestore.instance.collection('task').document(task.id).updateData({
                             'created_at': DateTime.now(),
                             'category': task.category,
-                            'title': task.title,
-                            'description': task.description,
-                            'additional_instruction': task.additionalInstruction,
-                            'tags': task.tags,
+                            'title': _titleInputController.text,
+                            'description': _descriptionInputController.text,
+                            'additional_instruction': _additionalInstructionInputController.text,
+                            'tags': _tagsInputController.text,
                             'date_time': task.dateTime,
-                            'location': task.location,
-                            'fee': task.fee,
+                            'location': _locationInputController.text,
+                            'fee': double.parse(_feeInputController.text),
                           }).then((value) {
                             Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                             Navigator.pop(context);
@@ -465,13 +458,13 @@ class _HomeState extends State<CreateTask> {
                             'author': {'name':user.displayName, 'profile_pic': user.photoUrl},
                             'service_provider': task.serviceProvider,
                             'category': task.category,
-                            'title': task.title,
-                            'description': task.description,
-                            'additional_instruction': task.additionalInstruction,
-                            'tags': task.tags,
+                            'title': _titleInputController.text,
+                            'description': _descriptionInputController.text,
+                            'additional_instruction': _additionalInstructionInputController.text,
+                            'tags': _tagsInputController.text,
                             'date_time': task.dateTime,
-                            'location': task.location,
-                            'fee': task.fee,
+                            'location': _locationInputController.text,
+                            'fee': double.parse(_feeInputController.text),
                             'payment': task.payment,
                             'status': 'Draft',
                             'offered_by': task.offeredBy,
@@ -503,18 +496,17 @@ class _HomeState extends State<CreateTask> {
 //                      );
                       if(_formKey.currentState.validate()) {
                         LoadingDialog.showLoadingDialog(context, _keyLoader, "Publishing task...");
-                        _formKey.currentState.save();
                         if(task.id!=null) {
                           Firestore.instance.collection('task').document(task.id).updateData({
                             'created_at': DateTime.now(),
                             'category': task.category,
-                            'title': task.title,
-                            'description': task.description,
-                            'additional_instruction': task.additionalInstruction,
-                            'tags': task.tags,
+                            'title': _titleInputController.text,
+                            'description': _descriptionInputController.text,
+                            'additional_instruction': _additionalInstructionInputController.text,
+                            'tags': _tagsInputController.text,
                             'date_time': task.dateTime,
-                            'location': task.location,
-                            'fee': task.fee,
+                            'location': _locationInputController.text,
+                            'fee': double.parse(_feeInputController.text),
                             'status': 'Open',
                           }).then((value) {
                             Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
@@ -532,13 +524,13 @@ class _HomeState extends State<CreateTask> {
                               'author': {'name':profile.data['name'], 'profile_pic': profile.data['profile_pic']},
                               'service_provider': task.serviceProvider,
                               'category': task.category,
-                              'title': task.title,
-                              'description': task.description,
-                              'additional_instruction': task.additionalInstruction,
-                              'tags': task.tags,
+                              'title': _titleInputController.text,
+                              'description': _descriptionInputController.text,
+                              'additional_instruction': _additionalInstructionInputController.text,
+                              'tags': _tagsInputController.text,
                               'date_time': task.dateTime,
-                              'location': task.location,
-                              'fee': task.fee,
+                              'location': _locationInputController.text,
+                              'fee': double.parse(_feeInputController.text),
                               'payment': task.payment,
                               'status': 'Open',
                               'offered_by': task.offeredBy,
@@ -566,18 +558,17 @@ class _HomeState extends State<CreateTask> {
                     onPressed: (){
                       if(_formKey.currentState.validate()) {
                         LoadingDialog.showLoadingDialog(context, _keyLoader, "Saving changes...");
-                        _formKey.currentState.save();
                         Firestore.instance.collection('task').document(task.id).updateData({
                           'updated_by': Firestore.instance.document('users/'+user.uid),
                           'updated_at': DateTime.now(),
                           'category': task.category,
-                          'title': task.title,
-                          'description': task.description,
-                          'additional_instruction': task.additionalInstruction,
-                          'tags': task.tags,
+                          'title': _titleInputController.text,
+                          'description': _descriptionInputController.text,
+                          'additional_instruction': _additionalInstructionInputController.text,
+                          'tags': _tagsInputController.text,
                           'date_time': task.dateTime,
-                          'location': task.location,
-                          'fee': task.fee,
+                          'location': _locationInputController.text,
+                          'fee': double.parse(_feeInputController.text),
                         }).then((value) {
                           Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                           Navigator.pop(context, true);
