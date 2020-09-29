@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 
 class Profile{
+  String id = '';
   String name = '';
   String email = '';
   String about = '';

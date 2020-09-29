@@ -25,7 +25,7 @@ class _HomeState extends State<MySingleTaskView> {
   Widget build(BuildContext context) {
     List<String> tagList = [];
     ownTask = task.createdBy.documentID == user.uid;
-    if(task.tags!=null)
+    if(task.tags!=null && task.tags.length>0)
       tagList = task.tags.split(',').map((tag) => tag.trim()).toList();
     tagList.insert(0, task.category);
     return Scaffold(
@@ -209,7 +209,7 @@ class _HomeState extends State<MySingleTaskView> {
                       ),
                       Container(
                         padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                        child: Text(task.additionalInstruction ?? '-',style: _style,),
+                        child: Text((task.additionalInstruction!=null && task.additionalInstruction!='') ? task.additionalInstruction : '-',style: _style,),
                       ),
                       SizedBox(height: 10,),
                       Row(
@@ -256,7 +256,7 @@ class _HomeState extends State<MySingleTaskView> {
                                     ),
                                     Container(
                                       height: 55,
-                                      child: Center(child: Text(task.location ?? '-',style: _style,),),
+                                      child: Center(child: Text((task.location!=null && task.location!='') ? task.location : '-',style: _style,),),
                                     ),
                                   ],
                                 ),
@@ -415,6 +415,7 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
                                   for (DocumentSnapshot doc in snapshot.data
                                       .documents) {
                                     Profile profile = new Profile.empty();
+                                    profile.id = doc.data["id"];
                                     profile.name = doc.data["name"];
                                     profile.email = doc.data["email"];
                                     profile.about = doc.data["about"];
@@ -487,14 +488,20 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
                                                                     ),
                                                                     FlatButton(
                                                                       onPressed: () {
-                                                                        Navigator.of(context).pop();
+                                                                        Firestore.instance.collection('task').document(task.id).updateData({
+                                                                          'offered_by': Firestore.instance.document('users/'+offerProfiles[index].id),
+                                                                          'status': 'Ongoing',
+                                                                          'updated_by': Firestore.instance.document('users/'+user.uid),
+                                                                          'updated_at': DateTime.now(),
+                                                                        });
+                                                                        Navigator.of(context).pop(true);
                                                                       },
                                                                       textColor: Theme.of(context).primaryColor,
                                                                       child: const Text('Yes, Accept'),
                                                                     ),
                                                                   ],
                                                                 ),
-                                                            );
+                                                            ).then((value) => Navigator.pop(context));
                                                           },
                                                           child: Text ('Accept',style: TextStyle(fontSize: 14,color: Colors.black,fontFamily: 'OpenSansR'),),
                                                           shape: RoundedRectangleBorder(borderRadius: new BorderRadius.circular(30.0)),
@@ -533,7 +540,7 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
             onPressed: (){
               Firestore.instance.collection('task').document(task.id).updateData({
                 'is_complete_by_author': true,
-                'status': 'Completed',
+                'status': task.isCompleteByProvider ? 'Completed' : 'Ongoing',
               });
               Navigator.pop(context);
             },
@@ -614,7 +621,10 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
         children: [
           FlatButton(
             onPressed: () {
-              Firestore.instance.collection('task').document(task.id).updateData({'is_complete_by_provider': true});
+              Firestore.instance.collection('task').document(task.id).updateData({
+                'is_complete_by_provider': true,
+                'status': task.isCompleteByAuthor ? 'Completed' : 'Ongoing',
+              });
             },
             child: Row(
               children: [

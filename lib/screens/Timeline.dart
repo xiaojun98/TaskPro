@@ -179,7 +179,7 @@ class _HomeState extends State<Timeline> {
                     task.rating = doc.data['rating'];
                     if(task.createdBy.documentID != user.uid) {
                       if(searching) {
-                        if(task.title.contains(searchTerm)||task.description.contains(searchTerm)||task.category.contains(searchTerm)||task.tags.contains(searchTerm))
+                        if(task.title.contains(searchTerm)||task.description.contains(searchTerm)||task.category.contains(searchTerm)||(task.tags!=null && task.tags.contains(searchTerm)))
                           taskList.add(task);
                       } else {
                         taskList.add(task);
