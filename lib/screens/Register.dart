@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'Login.dart';
-import 'MainPage.dart';
+import 'StartUp.dart';
 import 'MainNavigation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:testapp/services/loadingDialog.dart';
@@ -29,6 +29,7 @@ class _HomeState extends State<Register> {
   final _emailController = TextEditingController();
   final _idnumController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  UserUpdateInfo userUpdateInfo = new UserUpdateInfo();
 
   Future <bool> registerUser(String name, String phnum, String email, String idnum, BuildContext context) async {
     FirebaseAuth _auth = FirebaseAuth.instance;
@@ -75,8 +76,9 @@ class _HomeState extends State<Register> {
                         if (user != null) {
                           LoadingDialog.showLoadingDialog(context, _keyLoader, "Validating...");
                           _uid = user.uid;
-                          await createUser(_uid).catchError((e){
+                          await createUser(_uid,user).catchError((e){
                             print("$e,#in confirm button $_uid");
+                            Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                             }).then((value){
                               Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                               Navigator.push(context, MaterialPageRoute(
@@ -286,7 +288,7 @@ class _HomeState extends State<Register> {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => MainPage()));
+                                      builder: (context) => StartUp()));
                             },
                             child: Text('Cancel',
                               style: TextStyle(fontSize: 18,
@@ -308,14 +310,23 @@ class _HomeState extends State<Register> {
     );
   }
 
-  Future<bool> createUser(String _uid) async{
+  Future<bool> createUser(String _uid, FirebaseUser user) async{
+    userUpdateInfo.displayName = _name;
+    userUpdateInfo.photoUrl = ' ';
+    user.updateProfile(userUpdateInfo);
+    print("REGISTER : MY NAME IS : " + user.displayName);
     await db.collection("users").document(_uid).setData({
+      'id' : _uid,
       'name': _name,
       'ph_num': _phnum,
       'email': _email,
-      'idnum': _idnum
+      'idnum': _idnum,
+      'joined' : new DateTime.now(),
+      'role' : 'user',
+      'status' : 0
     }).then((value) async {
       await db.collection("profile").document(_uid).setData({
+        'id' : _uid,
         'name': _name,
         'ph_num': _phnum,
         'email' : _email,
@@ -323,7 +334,7 @@ class _HomeState extends State<Register> {
         'task_posted': 0,
         'rating' : 0,
         'review_num' : 0,
-        'isActive' : true,
+        'status' : 0,
         'gallery' : [],
         'profile_pic' : '',
         'services' : '',

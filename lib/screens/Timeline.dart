@@ -1,12 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:testapp/models/Profile.dart';
 import 'Inbox.dart';
 import 'MySingleTaskView.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/Task.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
+
 
 class Timeline extends StatefulWidget {
   FirebaseUser user;
@@ -21,21 +22,29 @@ class _HomeState extends State<Timeline> {
   Icon searchCon = Icon(Icons.search);
   Widget title = Text('Timeline');
 
-  List <Tags> popularTags
-  = [Tags('Pet care',30),
-    Tags('Shopper',28),
-    Tags('Household',13),
-    Tags('Gaming',5),
-    Tags('Delivery',18),
-    Tags('Tuition',12),
-    Tags('Child Care',7),
-    Tags('Designing',8),
-    Tags('Personal Helper',16),
-    Tags('Data Entry',18),
-  ];
   String dropdownValue = 'Order by';
   bool searching = false;
   String searchTerm = '';
+
+  RefreshController _refreshController = RefreshController(initialRefresh: false);
+
+  void _onRefresh() async{
+    // monitor network fetch
+    await Future.delayed(Duration(milliseconds: 1000));
+    // if failed,use refreshFailed()
+    _refreshController.refreshCompleted();
+  }
+
+  void _onLoading() async{
+    // monitor network fetch
+    await Future.delayed(Duration(milliseconds: 1000));
+    // if failed,use loadFailed(),if no data return,use LoadNodata()
+    if(mounted)
+      setState(() {
+
+      });
+    _refreshController.loadComplete();
+  }
 
   Widget build(BuildContext context) {
 
@@ -46,7 +55,7 @@ class _HomeState extends State<Timeline> {
         leading: IconButton(icon : Icon(Icons.inbox), onPressed: (){
           Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => Inbox()));
+              MaterialPageRoute(builder: (context) => Inbox(user : user)));
         },),
         elevation: 0.0,
         backgroundColor: Colors.amberAccent[400],
@@ -65,13 +74,13 @@ class _HomeState extends State<Timeline> {
                     child: TextField(
                       decoration: InputDecoration(hintText: "Search ... ",),
                       textInputAction: TextInputAction.go,
+
                       style: TextStyle(color: Colors.black, fontSize: 18),
                       cursorColor: Colors.grey,
-                      onSubmitted: (keyword) {
+                      onChanged:(keyword) {
                         setState(() {
-                          searchTerm = keyword;
-                        });
-                      },
+                        searchTerm = keyword;});
+                        },
                     ),
                   );
                 }
@@ -84,7 +93,7 @@ class _HomeState extends State<Timeline> {
                   this.title = Text('Timeline');
                 }
               });
-          },
+            },
           )
         ],
       ),
@@ -181,134 +190,175 @@ class _HomeState extends State<Timeline> {
                       if(searching) {
                         if(task.title.contains(searchTerm)||task.description.contains(searchTerm)||task.category.contains(searchTerm)||(task.tags!=null && task.tags.contains(searchTerm)))
                           taskList.add(task);
-                      } else {
+                        else{
+                          String capTerm = searchTerm.substring(0,1).toUpperCase() + searchTerm.substring(1);
+                          if(task.title.contains(capTerm)||task.description.contains(capTerm)||task.category.contains(capTerm)||(task.tags!=null && task.tags.contains(capTerm)))
+                            taskList.add(task);
+                          else{
+                            String decapTerm = searchTerm.substring(0,1) + searchTerm.substring(1).toLowerCase();
+                            if(task.title.contains(decapTerm)||task.description.contains(decapTerm)||task.category.contains(decapTerm)||(task.tags!=null && task.tags.contains(decapTerm)))
+                              taskList.add(task);
+                          }
+                        }
+                       } else {
                         taskList.add(task);
                       }
                     }
                   }
                   return Container(
                       height: 560,
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        scrollDirection: Axis.vertical,
-                        padding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
-                        itemCount: taskList.length,
-                        itemBuilder: (context,index){
-                          return StreamBuilder<DocumentSnapshot>(
-                            stream: Firestore.instance.collection('profile').document(taskList[index].createdBy.documentID).snapshots(),
-                            builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-                              print('profile id:'+taskList[index].createdBy.documentID);
-                              String username, profilePic;
-                              if (snapshot.hasData && snapshot.data.exists) {
-                                username = snapshot.data.data['name'];
-                                profilePic = snapshot.data.data['profile_pic'];
-                              }
-                              return Container(
-                                width: 390,
-                                height: 180,
-                                child: Card(
-                                    elevation: 5,
-                                    child : ListTile(
-                                      onTap: () async {
-                                        await Navigator.push(
-                                            context,
-                                            MaterialPageRoute(builder: (context) => MySingleTaskView(user: user, task: taskList[index],))
-                                        );
-                                        setState(() {});
-                                      },
-                                      leading : Column(
-                                        children: <Widget>[
-                                          CircleAvatar (
-                                            backgroundColor: Colors.white,
-                                            radius: 25,
-                                            child: ClipOval(
-                                              child: new SizedBox(
-                                                width: 50.0,
-                                                height: 50.0,
-                                                child: (profilePic!=null && profilePic!='') ? Image.network(
-                                                  profilePic,
-                                                  fit: BoxFit.cover,
-                                                ) : Image.asset(
-                                                  "assets/profile-icon.png",
-                                                  fit: BoxFit.cover,
+                      child: SmartRefresher(
+                        enablePullDown: true,
+                        enablePullUp: true,
+                        header: WaterDropHeader(),
+                        footer: CustomFooter(
+                          loadStyle: LoadStyle.HideAlways,
+                          builder: (BuildContext context, LoadStatus mode){
+                            Widget body ;
+                            if(mode==LoadStatus.idle){
+                              body =  Text("pull up load");
+                            }
+                            else if(mode==LoadStatus.loading){
+                            body =  CupertinoActivityIndicator();
+                            }
+                            else if(mode == LoadStatus.failed){
+                            body = Text("Load Failed!Click retry!");
+                            }
+                            else if(mode == LoadStatus.canLoading){
+                            body = Text("Release to load more");
+                            }
+                            else{
+                            body = Text("No more Data");
+                            }
+                          return Container(
+                            height: 55.0,
+                            child: Center(child:body),
+                            );},
+                        ),
+                        controller: _refreshController,
+                        onRefresh: _onRefresh,
+                        onLoading: _onLoading,
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          scrollDirection: Axis.vertical,
+                          padding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
+                          itemCount: taskList.length,
+                          itemBuilder: (context,index){
+                            return StreamBuilder<DocumentSnapshot>(
+                              stream: Firestore.instance.collection('profile').document(taskList[index].createdBy.documentID).snapshots(),
+                              builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+                                String username, profilePic;
+                                if (snapshot.hasData && snapshot.data.exists) {
+                                  username = snapshot.data.data['name'];
+                                  profilePic = snapshot.data.data['profile_pic'];
+                                }
+                                return Container(
+                                  width: 390,
+                                  height: 180,
+                                  child: Card(
+                                      elevation: 5,
+                                      child : ListTile(
+                                        onTap: () async {
+                                          await Navigator.push(
+                                              context,
+                                              MaterialPageRoute(builder: (context) => MySingleTaskView(user: user, task: taskList[index],))
+                                          );
+                                          setState(() {});
+                                        },
+                                        leading : Column(
+                                          children: <Widget>[
+                                            CircleAvatar (
+                                              backgroundColor: Colors.white,
+                                              radius: 25,
+                                              child: ClipOval(
+                                                child: new SizedBox(
+                                                  width: 50.0,
+                                                  height: 50.0,
+                                                  child: (profilePic!=null && profilePic!='') ? Image.network(
+                                                    profilePic,
+                                                    fit: BoxFit.cover,
+                                                  ) : Image.asset(
+                                                    "assets/profile-icon.png",
+                                                    fit: BoxFit.cover,
+                                                  ),
                                                 ),
                                               ),
                                             ),
+                                          ],),
+                                        subtitle : Container(
+                                          margin: EdgeInsets.symmetric(vertical: 10),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                            children: <Widget>[
+                                              Text((username!=null && username!='') ? username : 'User Name',style: TextStyle(color : Colors.lightBlue[900]),),
+                                              Divider(color: Colors.amber, thickness: 1.0,),
+                                              Text(taskList[index].title,style: TextStyle(fontSize: 16,color: Colors.black),),
+                                              Container(height: 48, child: Text(taskList[index].description, maxLines: 3, overflow: TextOverflow.ellipsis,),),
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.end,
+                                                children: <Widget>[
+                                                  Text (taskList[index].fee!=null ? 'RM'+taskList[index].fee.toStringAsFixed(2):'-'),
+                                                  StreamBuilder<QuerySnapshot>(
+                                                    stream: Firestore.instance.collection('bookmark')
+                                                        .where('user_id', isEqualTo: user.uid)
+                                                        .where('task_id',isEqualTo: taskList[index].id).snapshots(),
+                                                    builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                                                      bool bookmarkAdded = false;
+                                                      if(snapshot.hasData){
+                                                        bookmarkAdded = snapshot.data.documents.length != 0;
+                                                      }
+                                                      return IconButton(
+                                                        icon: bookmarkAdded ? Icon(Icons.bookmark, color: Colors.amber,) : Icon(Icons.bookmark_border, color: Colors.grey,),
+                                                        onPressed: bookmarkAdded? (){
+                                                          String bookmarkId;
+                                                          for (DocumentSnapshot doc in snapshot.data.documents) {
+                                                            bookmarkId = doc.documentID;
+                                                          }
+                                                          Firestore.instance.collection('bookmark').document(bookmarkId).delete();
+                                                        } : (){
+                                                          Firestore.instance.collection('bookmark').document().setData({
+                                                            'user_id': user.uid,
+                                                            'task_id': taskList[index].id,
+                                                          });
+                                                        },
+                                                      );
+                                                    },
+                                                  ),
+                                                  StreamBuilder<QuerySnapshot>(
+                                                    stream: Firestore.instance.collection('offer')
+                                                        .where('user_id', isEqualTo: user.uid)
+                                                        .where('task_id',isEqualTo: taskList[index].id).snapshots(),
+                                                    builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                                                      bool offerSent = false;
+                                                      if(snapshot.hasData){
+                                                        offerSent = snapshot.data.documents.length != 0;
+                                                      }
+                                                      return !offerSent ? IconButton(
+                                                        icon: Icon(Icons.send),
+                                                        onPressed: (){
+                                                          Firestore.instance.collection('offer').document().setData({
+                                                            'user_id': user.uid,
+                                                            'task_id': taskList[index].id,
+                                                          });
+                                                          Firestore.instance.collection('task').document(taskList[index].id).updateData({'offer_num': FieldValue.increment(1)});
+                                                        },
+                                                        color: Colors.amber,
+                                                      ) : Text('Offer Sent', style: TextStyle(color: Colors.amber, fontSize: 12),);
+                                                    },
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
                                           ),
-                                        ],),
-                                      subtitle : Container(
-                                        margin: EdgeInsets.symmetric(vertical: 10),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                          children: <Widget>[
-                                            Text((username!=null && username!='') ? username : 'User Name',style: TextStyle(color : Colors.lightBlue[900]),),
-                                            Divider(color: Colors.amber, thickness: 1.0,),
-                                            Text(taskList[index].title,style: TextStyle(fontSize: 16,color: Colors.black),),
-                                            Container(height: 48, child: Text(taskList[index].description, maxLines: 3, overflow: TextOverflow.ellipsis,),),
-                                            Row(
-                                              mainAxisAlignment: MainAxisAlignment.end,
-                                              children: <Widget>[
-                                                Text (taskList[index].fee!=null ? 'RM'+taskList[index].fee.toStringAsFixed(2):'-'),
-                                                StreamBuilder<QuerySnapshot>(
-                                                  stream: Firestore.instance.collection('bookmark')
-                                                      .where('user_id', isEqualTo: user.uid)
-                                                      .where('task_id',isEqualTo: taskList[index].id).snapshots(),
-                                                  builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                                                    bool bookmarkAdded = false;
-                                                    if(snapshot.hasData){
-                                                      bookmarkAdded = snapshot.data.documents.length != 0;
-                                                    }
-                                                    return IconButton(
-                                                      icon: bookmarkAdded ? Icon(Icons.bookmark, color: Colors.amber,) : Icon(Icons.bookmark_border, color: Colors.grey,),
-                                                      onPressed: bookmarkAdded? (){
-                                                        String bookmarkId;
-                                                        for (DocumentSnapshot doc in snapshot.data.documents) {
-                                                          bookmarkId = doc.documentID;
-                                                        }
-                                                        Firestore.instance.collection('bookmark').document(bookmarkId).delete();
-                                                      } : (){
-                                                        Firestore.instance.collection('bookmark').document().setData({
-                                                          'user_id': user.uid,
-                                                          'task_id': taskList[index].id,
-                                                        });
-                                                      },
-                                                    );
-                                                  },
-                                                ),
-                                                StreamBuilder<QuerySnapshot>(
-                                                  stream: Firestore.instance.collection('offer')
-                                                      .where('user_id', isEqualTo: user.uid)
-                                                      .where('task_id',isEqualTo: taskList[index].id).snapshots(),
-                                                  builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                                                    bool offerSent = false;
-                                                    if(snapshot.hasData){
-                                                      offerSent = snapshot.data.documents.length != 0;
-                                                    }
-                                                    return !offerSent ? IconButton(
-                                                      icon: Icon(Icons.send),
-                                                      onPressed: (){
-                                                        Firestore.instance.collection('offer').document().setData({
-                                                          'user_id': user.uid,
-                                                          'task_id': taskList[index].id,
-                                                        });
-                                                        Firestore.instance.collection('task').document(taskList[index].id).updateData({'offer_num': FieldValue.increment(1)});
-                                                      },
-                                                      color: Colors.amber,
-                                                    ) : Text('Offer Sent', style: TextStyle(color: Colors.amber, fontSize: 12),);
-                                                  },
-                                                ),
-                                              ],
-                                            ),
-                                          ],
                                         ),
-                                      ),
-                                    )
-                                ),
-                              );
-                            });
-                        }
+                                      )
+                                  ),
+                                );
+                              });
+                          }
                     ),
+                      ),
                   );
                 }
               },

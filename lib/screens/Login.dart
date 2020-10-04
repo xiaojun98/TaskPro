@@ -6,6 +6,7 @@ import 'package:testapp/screens/MainNavigation.dart';
 import 'package:testapp/screens/Register.dart';
 
 
+
 class Login extends StatefulWidget{
   @override
   _HomeState createState() => _HomeState();
@@ -59,10 +60,11 @@ class _HomeState extends State<Login> {
                             verificationId: verfId, smsCode: _code);
                         FirebaseUser user;
                         AuthResult result = await _auth.signInWithCredential(credential).catchError((e){
-                          showDialog(context: context,child: Text(e.toString(), style : TextStyle(fontSize: 18,
+                          showDialog(context: context,
+                              child: Text(e.toString(), style : TextStyle(fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'OpenSansR')));
-                        });
+                              fontFamily: 'OpenSansR'))
+                          );});
                         user = result.user;
 
                         if (user != null) {
@@ -136,7 +138,9 @@ class _HomeState extends State<Login> {
                 ),
                 OutlineButton(
                   onPressed: () async {
-                    final _phnum = _phnumController.text.trim();
+                    String _input = _phnumController.text.trim();
+                    final _phnum = (!_input.contains('+6')) ? '+6'+_input : _input;
+                    print(_phnum);
                     QuerySnapshot result = await Firestore.instance
                         .collection('users')
                         .where('ph_num', isEqualTo: _phnum)

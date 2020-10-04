@@ -14,11 +14,15 @@ class Profile{
   String completed = '';
   String reviewNum = '';
   String rating = '';
+  bool isActive = true;
+  int status = 0;
+  List chatWindowID = [];
   List gallery = [];
 
   Profile.empty() {}
 
   Profile(AsyncSnapshot<DocumentSnapshot> ds){
+    this.id = ds.data["id"];
     this.name = ds.data["name"];
     this.email = ds.data["email"];
     this.about = ds.data["about"];
@@ -31,6 +35,9 @@ class Profile{
     this.completed = ds.data["task_completed"].toString();
     this.reviewNum = ds.data["review_num"].toString();
     this.rating = ds.data["rating"].toString();
+    this.isActive = ds.data["isActive"];
+    this.status = ds.data["status"];
+    this.chatWindowID = ds.data["chatWindowID"];
     this.gallery = ds.data["gallery"];
   }
 

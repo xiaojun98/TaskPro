@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/MainPage.dart';
+import 'screens/StartUp.dart';
 
 void main() => runApp(MaterialApp(
   theme: ThemeData(
@@ -7,7 +7,7 @@ void main() => runApp(MaterialApp(
     accentColor: Colors.amber[800],
     cursorColor: Colors.amberAccent[400],
   ),
-  home : MainPage(),
+  home : StartUp(),
 )
 )
 ;

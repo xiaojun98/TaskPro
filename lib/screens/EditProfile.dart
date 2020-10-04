@@ -32,6 +32,7 @@ class _HomeState extends State<EditProfile> {
   String _profilePicPath;
   String _achievement;
   String _services;
+  UserUpdateInfo userUpdateInfo = new UserUpdateInfo();
 
   TextEditingController _nameController = new TextEditingController();
   TextEditingController _emailController = new TextEditingController();
@@ -61,12 +62,17 @@ class _HomeState extends State<EditProfile> {
     await firebaseStorageRef.getDownloadURL().then((val) async{
       _profilePicPath = val;
       LoadingDialog.showLoadingDialog(context, _keyLoader, "Uploading..");
+      userUpdateInfo.photoUrl = val;
+      print("photoUrl : MY photoUrl IS : " + user.photoUrl);
+      user.updateProfile(userUpdateInfo);
       await db.collection("profile").document(user.uid).updateData({
         'profile_pic' : val,
       }).then((val){
+
         Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
         Navigator.pop(context);});
     }).catchError((e){print(e.toString());});
+
   }
 
 
@@ -78,7 +84,9 @@ class _HomeState extends State<EditProfile> {
       'achievement' : achievement,
       'services' : services,
     }).catchError((e) {print(e.toString());}).then((val){print(_services);});
-
+    userUpdateInfo.displayName = name;
+    user.updateProfile(userUpdateInfo);
+    print("REGISTER : MY NAME IS : " + user.displayName);
   }
 
   void getValue(){

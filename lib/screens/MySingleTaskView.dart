@@ -103,41 +103,49 @@ class _HomeState extends State<MySingleTaskView> {
                     StreamBuilder<DocumentSnapshot>(
                       stream: Firestore.instance.collection('profile').document(task.createdBy.documentID).snapshots(),
                       builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-                        String username, profilePic;
+                        String username, profilePic ;
+                        Profile profile;
                         if (snapshot.hasData && snapshot.data.exists) {
                           username = snapshot.data.data['name'];
                           profilePic = snapshot.data.data['profile_pic'];
+                          profile = new Profile(snapshot);
                         }
-                        return Row(
-                          children: <Widget>[
-                            Container(
-                              padding: EdgeInsets.fromLTRB(0,0,20,0),
-                              child: CircleAvatar (
-                                backgroundColor: Colors.white,
-                                radius: 25,
-                                child: ClipOval(
-                                  child: new SizedBox(
-                                    width: 50.0,
-                                    height: 50.0,
-                                    child: (profilePic!=null && profilePic!='') ? Image.network(
-                                      profilePic,
-                                      fit: BoxFit.cover,
-                                    ) : Image.asset(
-                                      "assets/profile-icon.png",
-                                      fit: BoxFit.cover,
+                        return InkWell(
+                          onTap: (){
+                            Navigator.push(context, MaterialPageRoute(
+                                builder: (context) => ViewProfile(user : user , profile : profile)));
+                          },
+                          child: Row(
+                            children: <Widget>[
+                              Container(
+                                padding: EdgeInsets.fromLTRB(0,0,20,0),
+                                child: CircleAvatar (
+                                  backgroundColor: Colors.white,
+                                  radius: 25,
+                                  child: ClipOval(
+                                    child: new SizedBox(
+                                      width: 50.0,
+                                      height: 50.0,
+                                      child: (profilePic!=null && profilePic!='') ? Image.network(
+                                        profilePic,
+                                        fit: BoxFit.cover,
+                                      ) : Image.asset(
+                                        "assets/profile-icon.png",
+                                        fit: BoxFit.cover,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text((username!=null && username!='') ? username : 'User Name',style: TextStyle(color : Colors.lightBlue[900], fontWeight: FontWeight.bold, fontSize: 16),),
-                                Text(DateFormat('yyyy-MM-dd  h:mm a').format(task.createdAt).toString(),style: TextStyle(color : Colors.lightBlue[900]),),
-                              ],
-                            ),
-                          ],
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text((username!=null && username!='') ? username : 'User Name',style: TextStyle(color : Colors.lightBlue[900], fontWeight: FontWeight.bold, fontSize: 16),),
+                                  Text(DateFormat('yyyy-MM-dd  h:mm a').format(task.createdAt).toString(),style: TextStyle(color : Colors.lightBlue[900]),),
+                                ],
+                              ),
+                            ],
+                          ),
                         );
                       }
                     ),
@@ -331,6 +339,8 @@ class _HomeState extends State<MySingleTaskView> {
 //                  ],
 //                ),
                 SizedBox(height: 20,),
+                Text('Tags :',style: TextStyle(fontFamily: 'OpenSans-R', fontSize: 12, color: Colors.grey)),
+                SizedBox(height: 10,),
                 Container(height: 26, child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: tagList.length,

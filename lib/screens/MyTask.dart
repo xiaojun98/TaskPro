@@ -95,7 +95,7 @@ class _HomeState extends State<MyTask> {
                     stream: Firestore.instance.collection('task').where('id', whereIn: taskIdList).snapshots(),
                     builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
                       if(!snapshot.hasData) {
-                        return Center(child: Text('No bookmark found.', style: TextStyle(color: Colors.grey),),);
+                        return Center(child: Text('No offered found.', style: TextStyle(color: Colors.grey),),);
                       }
                       List<Task> taskList = [];
                       for (DocumentSnapshot doc in snapshot.data.documents) {
