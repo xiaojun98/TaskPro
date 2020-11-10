@@ -84,9 +84,12 @@ class _HomeState extends State<EditProfile> {
       'achievement' : achievement,
       'services' : services,
     }).catchError((e) {print(e.toString());}).then((val){print(_services);});
+    await db.collection("users").document(user.uid).updateData({
+      'name': name,
+    });
     userUpdateInfo.displayName = name;
     user.updateProfile(userUpdateInfo);
-    print("REGISTER : MY NAME IS : " + user.displayName);
+
   }
 
   void getValue(){
@@ -184,6 +187,7 @@ class _HomeState extends State<EditProfile> {
                       ),),
                       TextFormField(
                         controller: _nameController,
+                        textCapitalization: TextCapitalization.words,
                         //validate input in client side
                         validator: (val) =>
                         val.isEmpty
@@ -239,6 +243,7 @@ class _HomeState extends State<EditProfile> {
                         maxLength: 300,
                         maxLines: null,
                         controller: _aboutController,
+                        textCapitalization: TextCapitalization.sentences,
                         //validate input in client side
                         validator: (val) =>
                         (val.length > 300)
@@ -263,6 +268,7 @@ class _HomeState extends State<EditProfile> {
                       TextFormField(
                         controller: _achievementController,
                         textAlign: TextAlign.center,
+                        textCapitalization: TextCapitalization.sentences,
                         maxLength: 80,
                         maxLines: null,
                         validator: (val) =>
@@ -286,6 +292,7 @@ class _HomeState extends State<EditProfile> {
                       ),),
                       TextFormField(
                         controller: _servicesController,
+                        textCapitalization: TextCapitalization.sentences,
                         textAlign: TextAlign.center,
                         maxLength: 80,
                         maxLines: null,

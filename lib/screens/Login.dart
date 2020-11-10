@@ -43,6 +43,7 @@ class _HomeState extends State<Login> {
                     children: <Widget>[
                       TextField(
                         controller: _codeController,
+                        textAlign: TextAlign.center,
                         keyboardType: TextInputType.number,
                         onChanged: (val) {
                           setState(() => _code = val);
@@ -127,6 +128,7 @@ class _HomeState extends State<Login> {
                     child: TextFormField(
                       controller: _phnumController,
                       textAlign: TextAlign.center,
+                      keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                           hintText: "Mobile number",
                           hintStyle: TextStyle(

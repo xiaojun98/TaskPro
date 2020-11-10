@@ -138,6 +138,7 @@ class _HomeState extends State<Register> {
                     children: <Widget>[
                       TextFormField(
                         controller: _nameController,
+                        textCapitalization: TextCapitalization.words,
                         //validate input in client side
                         validator: (val) =>
                         val.isEmpty
@@ -323,7 +324,8 @@ class _HomeState extends State<Register> {
       'idnum': _idnum,
       'joined' : new DateTime.now(),
       'role' : 'user',
-      'status' : 0
+      'status' : 0,
+      'deleted_at' : null
     }).then((value) async {
       await db.collection("profile").document(_uid).setData({
         'id' : _uid,

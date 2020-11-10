@@ -32,33 +32,14 @@ class _HomeState extends State<CreateTask> {
   TextEditingController _locationInputController = new TextEditingController();
   TextEditingController _feeInputController = new TextEditingController();
 
-  Widget _buildAboutDialog(BuildContext context){
-    return new AlertDialog(
-        title: const Text('Continue'),
-        content: new Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text('Confirm publish? You will be redirected to transaction site to proceed.'),
-          ],
-        ),
-        actions: <Widget>[
-          new FlatButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-          textColor: Theme.of(context).primaryColor,
-          child: const Text('Proceed to transaction'),
-          ),
-        ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     DateTime now = DateTime.now();
-    if(task.dateTime == null || task.dateTime.isBefore(now)) {
-      task.dateTime = now;
+    if(task.offerDeadline == null || task.offerDeadline.isBefore(now)) {
+      task.offerDeadline = now;
+    }
+    if(task.taskDeadline == null || task.taskDeadline.isBefore(now)) {
+      task.taskDeadline = now;
     }
     if(task.status!=null) {
       _titleInputController.text = task.title;
@@ -110,9 +91,10 @@ class _HomeState extends State<CreateTask> {
                             draft.description = doc.data['description'];
                             draft.additionalInstruction = doc.data['additional_instruction'];
                             draft.tags = doc.data['tags'];
-                            draft.dateTime = doc.data['date_time'].toDate();
+                            draft.offerDeadline = doc.data['offer_deadline']?.toDate();
+                            draft.taskDeadline = doc.data['task_deadline']?.toDate();
                             draft.location = doc.data['location'];
-                            draft.fee = doc.data['fee'];
+                            draft.fee = double.parse(doc.data['fee'].toString());
                             draft.payment = doc.data['payment'];
                             draft.status = doc.data['status'];
                             draft.offeredBy = doc.data['offered_by'];
@@ -160,17 +142,17 @@ class _HomeState extends State<CreateTask> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(0,5,0,15),
                       child: StreamBuilder<QuerySnapshot>(
-                        stream: Firestore.instance.collection('category').snapshots(),
+                        stream: Firestore.instance.collection('category').document('taskCategory').collection('taskCategory').snapshots(),
                         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
                           if (!snapshot.hasData) {
                             return Text('Loading');
                           } else {
-                            List<DropdownMenuItem> catrgoryItems = [];
+                            List<DropdownMenuItem> categoryItems = [];
                             for (DocumentSnapshot category in snapshot.data.documents) {
-                              catrgoryItems.add(
+                              categoryItems.add(
                                   DropdownMenuItem(
-                                    child: Text(category.data['name']),
-                                    value: category.data['name'],
+                                    child: Text(category.documentID),
+                                    value: category.documentID,
                                   )
                               );
                             }
@@ -189,7 +171,7 @@ class _HomeState extends State<CreateTask> {
                                         padding: EdgeInsets.symmetric(horizontal: 10.0),
                                         child: DropdownButtonHideUnderline(
                                           child: DropdownButton(
-                                            items: catrgoryItems,
+                                            items: categoryItems,
                                             onChanged: (category) {
                                               setState(() {
                                                 task.category = category;
@@ -239,6 +221,7 @@ class _HomeState extends State<CreateTask> {
                             )),
                         maxLength: 30,
                         controller: _titleInputController,
+                        textCapitalization: TextCapitalization.words,
                         validator: (value) => value.isEmpty ? 'Please enter title for the task' : null,
                       ),
                     ),
@@ -255,6 +238,7 @@ class _HomeState extends State<CreateTask> {
                                 fontSize: 14
                             )),
                         keyboardType: TextInputType.multiline,
+                        textCapitalization: TextCapitalization.sentences,
                         maxLines: null,
                         minLines: 3,
                         controller: _descriptionInputController,
@@ -274,6 +258,7 @@ class _HomeState extends State<CreateTask> {
                                 fontSize: 14
                             )),
                         keyboardType: TextInputType.multiline,
+                        textCapitalization: TextCapitalization.sentences,
                         maxLines: null,
                         minLines: 3,
                         controller: _additionalInstructionInputController,
@@ -291,15 +276,16 @@ class _HomeState extends State<CreateTask> {
                                 color :Colors.grey,
                                 fontSize: 14
                             )),
+                        textCapitalization: TextCapitalization.words,
                         controller: _tagsInputController,
                       ),
                     ),
-                    Text('Date & Time',style: _style),
+                    Text('Accepting Offers Until',style: _style),
                     Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children : <Widget>[
                           Container(
-                            padding: const EdgeInsets.fromLTRB(0,5,0,15),
+                            padding: const EdgeInsets.fromLTRB(0,5,0,5),
                             child: OutlineButton(
                               borderSide: BorderSide(
                                 color: Colors.grey,
@@ -320,7 +306,7 @@ class _HomeState extends State<CreateTask> {
                                     ),
                                     SizedBox(width: 10),
                                     Text(
-                                      DateFormat('yyyy-MM-dd').format(task.dateTime),
+                                      DateFormat('yyyy-MM-dd').format(task.offerDeadline),
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 18.0),
@@ -331,12 +317,12 @@ class _HomeState extends State<CreateTask> {
                               onPressed: (){
                                 showDatePicker(
                                   context: context,
-                                  initialDate: task.dateTime,
+                                  initialDate: task.offerDeadline,
                                   firstDate: now,
                                   lastDate: now.add(new Duration(days: 365)),
                                 ).then((date){
                                   setState(() {
-                                    task.dateTime = date;
+                                    task.offerDeadline = date;
                                   });
                                 });
                               },
@@ -344,7 +330,7 @@ class _HomeState extends State<CreateTask> {
                           ),
                           SizedBox(width: 20),
                           Container(
-                            padding: const EdgeInsets.fromLTRB(0,5,0,15),
+                            padding: const EdgeInsets.fromLTRB(0,5,0,5),
                             child: OutlineButton(
                               borderSide: BorderSide(
                                 color: Colors.grey,
@@ -365,7 +351,7 @@ class _HomeState extends State<CreateTask> {
                                     ),
                                     SizedBox(width: 10),
                                     Text(
-                                      DateFormat.jm().format(task.dateTime),
+                                      DateFormat.jm().format(task.offerDeadline),
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 18.0),
@@ -376,17 +362,114 @@ class _HomeState extends State<CreateTask> {
                               onPressed: (){
                                 showTimePicker(
                                   context: context,
-                                  initialTime: TimeOfDay.fromDateTime(task.dateTime),
+                                  initialTime: TimeOfDay.fromDateTime(task.offerDeadline),
                                 ).then((time){
                                   setState(() {
-                                    task.dateTime = DateTime(task.dateTime.year, task.dateTime.month, task.dateTime.day, time.hour, time.minute);;
+                                    task.offerDeadline = DateTime(task.offerDeadline.year, task.offerDeadline.month, task.offerDeadline.day, time.hour, time.minute);
                                   });
                                 });
                               },
                             ),
                           ),
-                          //Text(chosenDate == null ? '- Days Left' : '${chosenDate.difference(DateTime.now()).inDays} Days Left' ,style: TextStyle(fontFamily: 'OpenSans-R',fontSize: 14,color: Colors.red)),
-                        ]),
+                        ]
+                    ),
+                    Text(task.offerDeadline == null ? '- Days Left' : '${task.offerDeadline.difference(DateTime.now()).inDays} Days Left' ,style: TextStyle(fontFamily: 'OpenSans-R',fontSize: 14,color: Colors.red),textAlign: TextAlign.end,),
+                    SizedBox(height: 15,),
+                    Text('Task Deadline',style: _style),
+                    Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children : <Widget>[
+                          Container(
+                            padding: const EdgeInsets.fromLTRB(0,5,0,5),
+                            child: OutlineButton(
+                              borderSide: BorderSide(
+                                color: Colors.grey,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(5.0),
+                              ),
+                              child: Container(
+                                alignment: Alignment.center,
+                                height: 50.0,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: <Widget>[
+                                    Icon(
+                                      Icons.date_range,
+                                      size: 18.0,
+                                      color: Colors.amberAccent[400],
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      DateFormat('yyyy-MM-dd').format(task.taskDeadline),
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18.0),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              onPressed: (){
+                                showDatePicker(
+                                  context: context,
+                                  initialDate: task.taskDeadline,
+                                  firstDate: now,
+                                  lastDate: now.add(new Duration(days: 365)),
+                                ).then((date){
+                                  setState(() {
+                                    task.taskDeadline = date;
+                                  });
+                                });
+                              },
+                            ),
+                          ),
+                          SizedBox(width: 20),
+                          Container(
+                            padding: const EdgeInsets.fromLTRB(0,5,0,5),
+                            child: OutlineButton(
+                              borderSide: BorderSide(
+                                color: Colors.grey,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(5.0),
+                              ),
+                              child: Container(
+                                alignment: Alignment.center,
+                                height: 50.0,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: <Widget>[
+                                    Icon(
+                                      Icons.access_time,
+                                      size: 18.0,
+                                      color: Colors.amberAccent[400],
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      DateFormat.jm().format(task.taskDeadline),
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18.0),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              onPressed: (){
+                                showTimePicker(
+                                  context: context,
+                                  initialTime: TimeOfDay.fromDateTime(task.taskDeadline),
+                                ).then((time){
+                                  setState(() {
+                                    task.taskDeadline = DateTime(task.taskDeadline.year, task.taskDeadline.month, task.taskDeadline.day, time.hour, time.minute);;
+                                  });
+                                });
+                              },
+                            ),
+                          ),
+                        ]
+                    ),
+                    Text(task.taskDeadline == null ? '- Days Left' : '${task.taskDeadline.difference(DateTime.now()).inDays} Days Left' ,style: TextStyle(fontFamily: 'OpenSans-R',fontSize: 14,color: Colors.redAccent),textAlign: TextAlign.end,),
+                    SizedBox(height: 15,),
                     Text('Location',style: _style),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(0,5,0,15),
@@ -399,6 +482,7 @@ class _HomeState extends State<CreateTask> {
                                 color :Colors.grey,
                                 fontSize: 14
                             )),
+                        textCapitalization: TextCapitalization.words,
                         controller: _locationInputController,
                       ),
                     ),
@@ -440,7 +524,8 @@ class _HomeState extends State<CreateTask> {
                             'description': _descriptionInputController.text,
                             'additional_instruction': _additionalInstructionInputController.text,
                             'tags': _tagsInputController.text,
-                            'date_time': task.dateTime,
+                            'offer_deadline': task.offerDeadline,
+                            'task_deadline': task.taskDeadline,
                             'location': _locationInputController.text,
                             'fee': double.parse(_feeInputController.text),
                           }).then((value) {
@@ -462,7 +547,8 @@ class _HomeState extends State<CreateTask> {
                             'description': _descriptionInputController.text,
                             'additional_instruction': _additionalInstructionInputController.text,
                             'tags': _tagsInputController.text,
-                            'date_time': task.dateTime,
+                            'offer_deadline': task.offerDeadline,
+                            'task_deadline': task.taskDeadline,
                             'location': _locationInputController.text,
                             'fee': double.parse(_feeInputController.text),
                             'payment': task.payment,
@@ -504,7 +590,8 @@ class _HomeState extends State<CreateTask> {
                             'description': _descriptionInputController.text,
                             'additional_instruction': _additionalInstructionInputController.text,
                             'tags': _tagsInputController.text,
-                            'date_time': task.dateTime,
+                            'offer_deadline': task.offerDeadline,
+                            'task_deadline': task.taskDeadline,
                             'location': _locationInputController.text,
                             'fee': double.parse(_feeInputController.text),
                             'status': 'Open',
@@ -528,7 +615,8 @@ class _HomeState extends State<CreateTask> {
                               'description': _descriptionInputController.text,
                               'additional_instruction': _additionalInstructionInputController.text,
                               'tags': _tagsInputController.text,
-                              'date_time': task.dateTime,
+                              'offer_deadline': task.offerDeadline,
+                              'task_deadline': task.taskDeadline,
                               'location': _locationInputController.text,
                               'fee': double.parse(_feeInputController.text),
                               'payment': task.payment,
@@ -566,7 +654,8 @@ class _HomeState extends State<CreateTask> {
                           'description': _descriptionInputController.text,
                           'additional_instruction': _additionalInstructionInputController.text,
                           'tags': _tagsInputController.text,
-                          'date_time': task.dateTime,
+                          'offer_deadline': task.offerDeadline,
+                          'task_deadline': task.taskDeadline,
                           'location': _locationInputController.text,
                           'fee': double.parse(_feeInputController.text),
                         }).then((value) {

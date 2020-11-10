@@ -8,11 +8,11 @@ import 'Account.dart';
 import '../models/Task.dart';
 import 'dart:io';
 
-/*void main() => runApp(MaterialApp(
+void main() => runApp(MaterialApp(
   home : MainNavigation(),
 )
 )
-;*/
+;
 
 class MainNavigation extends StatefulWidget{
   @override

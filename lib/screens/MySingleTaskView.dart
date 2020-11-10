@@ -1,12 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:progress_dialog/progress_dialog.dart';
 import 'package:testapp/screens/CreateTask.dart';
 import '../models/Task.dart';
 import '../models/Profile.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'ViewProfile.dart';
+import 'CreateReport.dart';
+import 'package:testapp/services/stripeService.dart';
 
 class MySingleTaskView extends StatefulWidget {
   FirebaseUser user;
@@ -22,6 +25,12 @@ class _HomeState extends State<MySingleTaskView> {
   _HomeState(this.user, this.task);
   TextStyle _style = TextStyle(fontFamily: 'OpenSans-R',fontSize: 16,);
   bool ownTask = false;
+
+  void initState(){
+    super.initState();
+    StripeService.init();
+  }
+
   Widget build(BuildContext context) {
     List<String> tagList = [];
     ownTask = task.createdBy.documentID == user.uid;
@@ -88,7 +97,30 @@ class _HomeState extends State<MySingleTaskView> {
               ];
             },
           ),
-        ] : [],
+        ] : [ IconButton(
+                icon : Icon(Icons.report_gmailerrorred_outlined),
+                onPressed: () => showDialog<bool>(
+                  context: context,
+                  builder: (c) => AlertDialog(
+                    title: Text('Alert'),
+                    content: Text('Report this task?'),
+                    actions: [
+                      FlatButton(
+                          child: Text('Yes'),
+                          onPressed: () {
+                            Navigator.pop(c,true);
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => CreateReport(user: user, category: 'Task Related Issues', taskId: task.id, profileId: null,)));
+                          }
+                      ),
+                      FlatButton(
+                        child: Text('No'),
+                        onPressed: () => Navigator.pop(c, false),
+                      ),
+                    ],
+                  ),
+                )
+            )
+          ],
       ),
       body: SingleChildScrollView(
           child: Container(
@@ -196,12 +228,12 @@ class _HomeState extends State<MySingleTaskView> {
                 Text('ID: '+task.id,style: TextStyle(fontFamily: 'OpenSans-R', fontSize: 12, color: Colors.grey)),
                 SizedBox(height: 20,),
                 Container(
-                  decoration: BoxDecoration(border: Border.all(color: Colors.amber), borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(border: Border.all(color: Colors.blueGrey), borderRadius: BorderRadius.circular(10)),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        decoration: BoxDecoration(borderRadius: BorderRadius.only(topLeft: Radius.circular(9), topRight: Radius.circular(9)), color: Colors.amber,),
+                        decoration: BoxDecoration(borderRadius: BorderRadius.only(topLeft: Radius.circular(9), topRight: Radius.circular(9)), color: Colors.blueGrey,),
                         height: 25,
                         child: Center(child: Text('Task Description',style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),),
                       ),
@@ -212,7 +244,7 @@ class _HomeState extends State<MySingleTaskView> {
                       SizedBox(height: 10,),
                       Container(
                         height: 25,
-                        color: Colors.amber,
+                        color: Colors.blueGrey,
                         child: Center(child: Text('Additional Instruction',style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),),
                       ),
                       Container(
@@ -232,16 +264,16 @@ class _HomeState extends State<MySingleTaskView> {
                                 children: [
                                   Container(
                                     height: 25,
-                                    color: Colors.amber,
-                                    child: Center(child: Text('Date & Time',style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),),
+                                    color: Colors.blueGrey,
+                                    child: Center(child: Text('Accepting Offers Until : ',style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),),
                                   ),
                                   Container(
                                     height: 55,
                                     child: Column(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        Text(DateFormat('yyyy-MM-dd').format(task.dateTime).toString(),style: _style,),
-                                        Text(DateFormat('h:mm a').format(task.dateTime).toString(),style: _style,),
+                                        Text(DateFormat('yyyy-MM-dd').format(task.offerDeadline).toString(),style: _style,),
+                                        Text(DateFormat('h:mm a').format(task.offerDeadline).toString(),style: _style,),
                                       ],
                                     ),
                                   ),
@@ -249,28 +281,58 @@ class _HomeState extends State<MySingleTaskView> {
                               ),
                             ),
                           ),
-                          Container(color: Colors.amber, width: 1, height: 80,),
-                          //Container(height: 50, child: VerticalDivider(color: Colors.amber, thickness: 1,),),
+                          Container(color: Colors.blueGrey, width: 1, height: 80,),
                           Expanded(
                             child: Container(
-                                height: 80,
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      height: 25,
-                                      color: Colors.amber,
-                                      child: Center(child: Text('Location',style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),),
+                              height: 80,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    height: 25,
+                                    color: Colors.blueGrey,
+                                    child: Center(child: Text('Task Deadline : ',style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),),
+                                  ),
+                                  Container(
+                                    height: 55,
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(DateFormat('yyyy-MM-dd').format(task.taskDeadline).toString(),style: _style,),
+                                        Text(DateFormat('h:mm a').format(task.taskDeadline).toString(),style: _style,),
+                                      ],
                                     ),
-                                    Container(
-                                      height: 55,
-                                      child: Center(child: Text((task.location!=null && task.location!='') ? task.location : '-',style: _style,),),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                          Container(color: Colors.amber, width: 1, height: 80,),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 80,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    height: 25,
+                                    color: Colors.blueGrey,
+                                    child: Center(child: Text('Location',style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),),
+                                  ),
+                                  Container(
+                                    height: 55,
+                                    child: Center(child: Text((task.location!=null && task.location!='') ? task.location : '-',style: _style,),),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Container(color: Colors.blueGrey, width: 1, height: 80,),
                           //Container(height: 50, child: VerticalDivider(color: Colors.amber, thickness: 1,),),
                           Expanded(
                             child: Container(
@@ -280,7 +342,7 @@ class _HomeState extends State<MySingleTaskView> {
                                 children: [
                                   Container(
                                     height: 25,
-                                    color: Colors.amber,
+                                    color: Colors.blueGrey,
                                     child: Center(child: Text('Fee',style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),),
                                   ),
                                   Container(
@@ -292,52 +354,10 @@ class _HomeState extends State<MySingleTaskView> {
                             ),
                           ),
                         ],
-                      ),
+                      )
                     ]
                   ),
                 ),
-//                SizedBox(height: 20,),
-//                Row(
-//                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-//                  children: [
-//                    Container(
-//                      height: 60,
-//                      child: Column(
-//                        mainAxisAlignment: MainAxisAlignment.start,
-//                        children: [
-//                          Text('Date & Time',style: TextStyle(fontSize: 13)),
-//                          SizedBox(height: 2,),
-//                          Text(DateFormat('yyyy-MM-dd').format(task.dateTime).toString(),style: _style,),
-//                          Text(DateFormat('h:mm a').format(task.dateTime).toString(),style: _style,),
-//                        ],
-//                      ),
-//                    ),
-//                    Container(height: 50, child: VerticalDivider(color: Colors.amber, thickness: 1,),),
-//                    Container(
-//                      height: 60,
-//                      child: Column(
-//                        mainAxisAlignment: MainAxisAlignment.start,
-//                        children: [
-//                          Text('Location',style: TextStyle(fontSize: 13)),
-//                          SizedBox(height: 10,),
-//                          Text(task.location ?? '-',style: _style,),
-//                        ],
-//                      ),
-//                    ),
-//                    Container(height: 50, child: VerticalDivider(color: Colors.amber, thickness: 1,),),
-//                    Container(
-//                      height: 55,
-//                      child: Column(
-//                        mainAxisAlignment: MainAxisAlignment.start,
-//                        children: [
-//                          Text('Fee',style: TextStyle(fontSize: 13)),
-//                          SizedBox(height: 10,),
-//                          Text('RM'+task.fee.toStringAsFixed(2),style: _style,),
-//                        ],
-//                      ),
-//                    ),
-//                  ],
-//                ),
                 SizedBox(height: 20,),
                 Text('Tags :',style: TextStyle(fontFamily: 'OpenSans-R', fontSize: 12, color: Colors.grey)),
                 SizedBox(height: 10,),
@@ -348,7 +368,7 @@ class _HomeState extends State<MySingleTaskView> {
                     return Container(
                       margin: EdgeInsets.only(right: 10),
                       padding: EdgeInsets.all(5),
-                      decoration: BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(5)),
+                      decoration: BoxDecoration(color: Colors.blueGrey, borderRadius: BorderRadius.circular(5)),
                       child: Text(tagList[index], style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
                     );
                   },
@@ -361,6 +381,33 @@ class _HomeState extends State<MySingleTaskView> {
     );
   }
 }
+
+// payViaNewCard(BuildContext context , Task task) async {
+//   ProgressDialog dialog = new ProgressDialog(context);
+//   dialog.style(
+//       message: 'Please wait...'
+//   );
+//   await dialog.show();
+//   var response = await StripeService.payWithNewCard(
+//       amount: task.fee.toString(),
+//       currency: 'myr'
+//   );
+//   if (response.success){
+//     Firestore.instance.collection('task').document(task.id).updateData({
+//       'offered_by': Firestore.instance.document('users/'+offerProfiles[index].id),
+//       'status': 'Ongoing',
+//       'updated_by': Firestore.instance.document('users/'+user.uid),
+//       'updated_at': DateTime.now(),
+//     })
+//   }
+//   await dialog.hide();
+//   Scaffold.of(context).showSnackBar(
+//       SnackBar(
+//         content: Text(response.message),
+//         duration: new Duration(milliseconds: response.success == true ? 1200 : 3000),
+//       )
+//   );
+// }
 
 Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bool ownTask){
   if(ownTask) {
@@ -497,21 +544,48 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
                                                                       child: const Text('Cancel'),
                                                                     ),
                                                                     FlatButton(
-                                                                      onPressed: () {
-                                                                        Firestore.instance.collection('task').document(task.id).updateData({
-                                                                          'offered_by': Firestore.instance.document('users/'+offerProfiles[index].id),
-                                                                          'status': 'Ongoing',
-                                                                          'updated_by': Firestore.instance.document('users/'+user.uid),
-                                                                          'updated_at': DateTime.now(),
-                                                                        });
+                                                                      onPressed: () async {
+                                                                        ProgressDialog dialog = new ProgressDialog(context);
+                                                                        dialog.style(
+                                                                            message: 'Please wait...'
+                                                                        );
+                                                                        await dialog.show();
+                                                                        var response = await StripeService.payWithNewCard(
+                                                                            amount: (task.fee * 100).toInt().toString(),
+                                                                            currency: 'myr'
+                                                                        );
+                                                                        if (response.success){
+                                                                          Firestore.instance.collection('wallet').document(user.uid).collection('credit').add({
+                                                                            'amount' : task.fee,
+                                                                            'createdAt' : DateTime.now(),
+                                                                            'status' : 'hold',
+                                                                            'taskRef' : Firestore.instance.document('task/'+ task.id),
+                                                                            'creditTarget' : Firestore.instance.document('users/'+offerProfiles[index].id),
+                                                                          }).then((value) => {
+                                                                            Firestore.instance.collection('task').document(task.id).updateData({
+                                                                            'offered_by': Firestore.instance.document('users/'+offerProfiles[index].id),
+                                                                            'status': 'Ongoing',
+                                                                            'updated_by': Firestore.instance.document('users/'+user.uid),
+                                                                            'updated_at': DateTime.now(),
+                                                                            })
+                                                                          });
+                                                                        }
+                                                                        await dialog.hide();
+                                                                        Scaffold.of(context).showSnackBar(
+                                                                            SnackBar(
+                                                                              content: Text(response.message),
+                                                                              duration: new Duration(milliseconds: response.success == true ? 1200 : 3000),
+                                                                            )
+                                                                        );
                                                                         Navigator.of(context).pop(true);
+                                                                        Navigator.pop(context);
                                                                       },
                                                                       textColor: Theme.of(context).primaryColor,
                                                                       child: const Text('Yes, Accept'),
                                                                     ),
                                                                   ],
                                                                 ),
-                                                            ).then((value) => Navigator.pop(context));
+                                                            );
                                                           },
                                                           child: Text ('Accept',style: TextStyle(fontSize: 14,color: Colors.black,fontFamily: 'OpenSansR'),),
                                                           shape: RoundedRectangleBorder(borderRadius: new BorderRadius.circular(30.0)),

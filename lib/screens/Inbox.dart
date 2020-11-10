@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:testapp/models/Message.dart';
 import 'package:intl/intl.dart';
+import 'package:testapp/models/Notification.dart';
 import 'package:testapp/models/Profile.dart';
 import 'ChatWindow.dart';
 
@@ -19,17 +20,6 @@ class _HomeState extends State<Inbox> {
   _HomeState(this.user);
 
 
-//  List <Message> msg = [
-//    Message('Alicia Ong','Ok. No problem.','2020-05-03 08:23:31'),
-//    Message('Tan Win Yin','see you later.','2020-05-04 10:12:21'),
-//    Message('Mohd Syafiq','boleh sir.','2020-05-04 13:56:44'),
-//  ];
-
-  List <Notification> notifation = [
-    Notification('Stay at home Covid-19','Stay home and we will do your work for you. TaskPro make it easy for you'),
-    Notification('Report ID83759','Your task #1292849 is cancelled successfully.'),
-    Notification('Task Completed','You have received RM23 from task #24679'),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -39,16 +29,6 @@ class _HomeState extends State<Inbox> {
         appBar: AppBar(title : Text('Inbox'),
           centerTitle: true ,
           elevation: 0.0,
-//          actions: <Widget>[
-//            IconButton(
-//              icon : Icon(Icons.delete),
-//              tooltip: 'Delete Message',
-//              onPressed: () {},),
-//            IconButton(
-//              icon : Icon(Icons.add_circle_outline),
-//              tooltip: 'New Message',
-//              onPressed: () {},),
-//          ],
           backgroundColor: Colors.amberAccent[400],
           bottom: TabBar(
             indicatorColor: Colors.white,
@@ -63,20 +43,7 @@ class _HomeState extends State<Inbox> {
         body: TabBarView(
           children: <Widget>[
             buildListChat(),
-            ListView.builder(
-                padding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
-                itemCount: notifation.length,
-                itemBuilder: (context,index){
-                  return Card(
-                    child: ListTile(
-                      onTap: (){},
-                      leading: Icon(Icons.notifications,color: Colors.amberAccent,),
-                      title: Text(notifation[index].title),
-                      subtitle: Text(notifation[index].nortiMsg,overflow: TextOverflow.ellipsis),
-                    ),
-                  );
-                }
-            ),
+            buildListNotification(),
           ],
         ),
       ),
@@ -112,7 +79,7 @@ class _HomeState extends State<Inbox> {
             return ListView.builder(
               shrinkWrap: true,
               padding: EdgeInsets.all(10.0),
-              itemBuilder: (context, index) => buildItem(chatList[index],chatList[index].peerId),
+              itemBuilder: (context, index) => buildChatItem(chatList[index],chatList[index].peerId),
               itemCount: snapshot.data.documents.length,
 //              controller: listScrollController,
             );
@@ -123,7 +90,7 @@ class _HomeState extends State<Inbox> {
 
   }
 
-  Widget buildItem(AssociatedChat associatedChat, String peerId) {
+  Widget buildChatItem(AssociatedChat associatedChat, String peerId) {
     return Card(
         child: ListTile(
           onTap: (){
@@ -195,22 +162,113 @@ class _HomeState extends State<Inbox> {
               ChatWindow(user: user, profile: profile)));
     });
   }
-}
 
+  buildListNotification(){
 
+    return Container(
+      child: StreamBuilder(
+        stream: Firestore.instance
+            .collection('notification')
+            .where('sentTo', whereIn: [user.uid,'ALL'])
+            .orderBy('sentAt' , descending: true)
+            .snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
 
+          if(!snapshot.hasData) {
+            return Center(
+                child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)));
+          } else {
+            List<NotificationItem> notiList = [];
+            for (DocumentSnapshot doc in snapshot.data.documents) {
+              NotificationItem notification = new NotificationItem();
+              notification.title = doc.data['title'];
+              notification.id = doc.data['id'];
+              notification.sentAt = doc.data['sentAt']?.toDate();;
+              notification.sentTo = doc.data['sentTo'] == user.displayName ? 'Me' : 'All';
+              notification.imgHeader = doc.data['imageHeader'];
+              notification.content = doc.data['content'];
+              notiList.add(notification);
+            }
+            return ListView.builder(
+              shrinkWrap: true,
+              padding: EdgeInsets.all(10.0),
+              itemBuilder: (context, index) => buildNotiItem(notiList[index]),
+              itemCount: snapshot.data.documents.length,
+            );
+          }
+        },
+      ),
+    );
+  }
 
-class Notification {
-  String title;
-  String nortiMsg;
+  Widget buildNotiItem(NotificationItem notiItem) {
+    return Card(
 
-  Notification (String title,String nortiMsg){
-    this.title = title;
-    this.nortiMsg = nortiMsg;
+      child: ListTile(
+        onTap: (){
+          Navigator.push(context, MaterialPageRoute(
+              builder: (context) =>
+                  ViewNotification(user: user, notificationItem: notiItem)));
+        },
+        leading : Icon(Icons.notifications),
+        title: Text(notiItem.title),
+        subtitle:Text(notiItem.content,overflow: TextOverflow.ellipsis),
+        trailing: Text(DateFormat.yMMMd().format(notiItem.sentAt).substring(0,3)),
+      ),
+    );
 
   }
 }
 
+
+class ViewNotification extends StatefulWidget {
+  FirebaseUser user;
+  NotificationItem notificationItem;
+  ViewNotification({this.user , this.notificationItem});
+  _NotificationState createState() => _NotificationState(user , notificationItem);
+}
+
+class _NotificationState extends State<ViewNotification> {
+  FirebaseUser user;
+  NotificationItem notificationItem;
+
+  _NotificationState(this.user, this.notificationItem);
+
+  @override
+  Widget build(BuildContext context) {
+
+    TextStyle _style1 = TextStyle(fontFamily: 'OpenSans-R',fontSize: 20);
+    TextStyle _style2 = TextStyle(fontFamily: 'OpenSans-R',fontSize: 12,color: Colors.black26,);
+
+    return Scaffold(
+        appBar : AppBar(
+          centerTitle: true,
+          title : Text("View Notification"),
+          elevation: 0.0,
+          backgroundColor: Colors.amberAccent[400],
+    ),
+    body: SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(notificationItem.title, style: _style1,),
+            SizedBox(height: 5,),
+            Text('id : ' + notificationItem.id, style: _style2,),
+            SizedBox(height: 10,),
+            Container(color: Colors.blueGrey, height: 1,),
+            SizedBox(height: 10,),
+            (notificationItem.imgHeader == '' ) ? Container() : Image.network(notificationItem.imgHeader),
+            SizedBox(height: 10,),
+            Text(notificationItem.content),
+          ],
+        ),
+      ),
+
+    ));
+  }
+}
 
 
 

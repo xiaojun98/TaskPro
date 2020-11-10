@@ -14,7 +14,8 @@ class Task {
   String description;
   String additionalInstruction;
   String tags;
-  DateTime dateTime;
+  DateTime offerDeadline;
+  DateTime taskDeadline;
   String location;
   double fee;
   DocumentReference payment;
@@ -24,4 +25,5 @@ class Task {
   bool isCompleteByProvider = false;
   int offerNum;
   double rating;
+  DateTime upcomingDeadline;
 }

@@ -2,8 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_full_pdf_viewer/full_pdf_viewer_scaffold.dart';
 import 'package:testapp/models/Profile.dart';
+import 'package:testapp/screens/BalanceAndPayout.dart';
+import 'CreateReport.dart';
 import 'EditProfile.dart';
+import 'Setup Stripe.dart';
+import 'SetupCard.dart';
 import 'StartUp.dart';
 import 'ViewProfile.dart';
 
@@ -21,6 +26,7 @@ class _HomeState extends State<Account> {
   String profilePic = '';
   TextStyle _style1 = TextStyle(fontFamily: 'OpenSans-R',fontWeight:FontWeight.bold,fontSize: 18);
   TextStyle _style2 = TextStyle(fontFamily: 'OpenSans-R',fontSize: 16);
+
 
   Widget build(BuildContext context) {
 
@@ -91,6 +97,59 @@ class _HomeState extends State<Account> {
         ),
         Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Text('Wallet',style : _style1,textAlign: TextAlign.left,)),
+        Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          elevation: 5,
+          margin: EdgeInsets.all(20),
+          child: Column(
+            children: <Widget>[
+              ListTile(
+                onTap: (){
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => SetupStripe(user : user)));
+                },
+                leading: Icon(Icons.account_balance_wallet),
+                title: Text("Set Up Stripe", style : _style2),
+                trailing: Icon(Icons.arrow_forward),
+              ),
+              ListTile(
+                onTap: (){
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => SetupCard(user: user,)));
+                },
+                leading: Icon(Icons.credit_card),
+                title: Text("Set Up Card", style : _style2),
+                trailing: Icon(Icons.arrow_forward),
+              ),
+              ListTile(
+                onTap: (){
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => BalanceAndPayout(user : user)));
+                },
+                leading: Icon(Icons.monetization_on),
+                title: Text("Balance and Payout", style : _style2),
+                trailing: Icon(Icons.arrow_forward),
+              ),
+              ListTile(
+                onTap: (){
+
+                },
+                leading: Icon(Icons.history),
+                title: Text("Transaction History", style : _style2),
+                trailing: Icon(Icons.arrow_forward),
+              ),
+              // ListTile(
+              //   onTap: (){
+              //
+              //   },
+              //   leading: Icon(Icons.monetization_on),
+              //   title: Text("Request a refund", style : _style2),
+              //   trailing: Icon(Icons.arrow_forward),
+              // ),
+            ],
+          ),
+        ),
+        SizedBox(height:10),
+        Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
             child: Text('Support',style : _style1,textAlign: TextAlign.left,)),
         Card(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -100,23 +159,17 @@ class _HomeState extends State<Account> {
             children: <Widget>[
               ListTile(
                 onTap: (){
-
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => CreateReport(user: user, category: null, taskId: null, profileId: null,)));
                 },
                 leading: Icon(Icons.report_problem),
                 title: Text("Report an issue", style : _style2),
                 trailing: Icon(Icons.arrow_forward),
               ),
               ListTile(
-                onTap: (){
-
-                },
-                leading: Icon(Icons.monetization_on),
-                title: Text("Make a refund", style : _style2),
-                trailing: Icon(Icons.arrow_forward),
-              ),
-              ListTile(
-                onTap: (){
-
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => viewTnc('https://firebasestorage.googleapis.com/v0/b/taskpro-47370.appspot.com/o/Terms%20and%20Condition%2FTerms%20and%20Condition%20draft.pdf?alt=media&token=a212132e-bac1-442c-b677-ff7e0f8807d1')));
                 },
                 leading: Icon(Icons.verified_user),
                 title: Text("Terms and Conditions", style : _style2),
@@ -159,21 +212,14 @@ class _HomeState extends State<Account> {
                 onTap: (){
 
                 },
-                leading: Icon(Icons.credit_card),
-                title: Text("Update Bank Information", style : _style2),
-                trailing: Icon(Icons.arrow_forward),
-              ),
-              ListTile(
-                onTap: (){
-
-                },
                 leading: Icon(Icons.block),
-                title: Text("Deactivate Account", style : _style2),
+                title: Text("Delete Account", style : _style2),
                 trailing: Icon(Icons.arrow_forward),
               ),
               ListTile(
                 onTap: () async{
                   await FirebaseAuth.instance.signOut().then((val){
+                    Navigator.of(context).pop();
                     Navigator.push(context, MaterialPageRoute(builder: (context) => StartUp()));
                   }).catchError((e){
                     print(e.toString());
@@ -188,5 +234,12 @@ class _HomeState extends State<Account> {
         )
       ],
     );
+  }
+  Widget viewTnc (String pdfPath) {
+    return PDFViewerScaffold(
+        appBar: AppBar(
+          title: Text("Terms and Condition"),
+        ),
+        path: pdfPath);
   }
 }

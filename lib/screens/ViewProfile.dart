@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:testapp/models/Profile.dart';
 import 'ChatWindow.dart';
+import 'CreateReport.dart';
 
 
 class ViewProfile extends StatefulWidget {
@@ -58,8 +59,33 @@ class _HomeState extends State<ViewProfile> {
       appBar: AppBar(title : Text('Profile'),
         centerTitle: true ,
         elevation: 0.0,
-        backgroundColor: Colors.amberAccent[400],),
-      // ignore: missing_return
+        backgroundColor: Colors.amberAccent[400],
+        actions: <Widget>[
+          (!ownProfile) ? IconButton(
+            icon : Icon(Icons.report_gmailerrorred_outlined),
+            onPressed: () => showDialog<bool>(
+              context: context,
+              builder: (c) => AlertDialog(
+                title: Text('Alert'),
+                content: Text('Report this user?'),
+                actions: [
+                  FlatButton(
+                    child: Text('Yes'),
+                    onPressed: () {
+                      Navigator.pop(c,true);
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => CreateReport(user: user, category: 'Report an User', taskId: null, profileId: profile.id,)));
+                    }
+                  ),
+                  FlatButton(
+                    child: Text('No'),
+                    onPressed: () => Navigator.pop(c, false),
+                  ),
+                ],
+              ),
+            )
+          ) : Container ()
+        ],
+      ),
       floatingActionButton: Builder(builder: (context){
           if(!ownProfile){
             return Padding(
@@ -125,6 +151,11 @@ class _HomeState extends State<ViewProfile> {
                                 Text(profile.name, style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold
+                                ),),
+                                SizedBox(height: 5),
+                                Text("ID: " + profile.id, style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.black26,
                                 ),),
                                 SizedBox(height: 10),
                                 Row(

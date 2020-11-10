@@ -38,8 +38,6 @@ class _HomeState extends State<ChatWindow> {
 
   File imageFile;
   String imageUrl;
-//  File pdfFile;
-//  String pdfUrl;
   bool isLoading;
 
   @override
@@ -402,22 +400,21 @@ class _HomeState extends State<ChatWindow> {
                 )
                     : Container(
                   width: 210.0,
-                  height: 80.0,
                   margin: EdgeInsets.only(
                       left : 10 ),
                   child: Card(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     color: Colors.indigo,
                     child: ListTile(
-                      contentPadding: EdgeInsets.symmetric(vertical: 0,horizontal: 10),
+                      contentPadding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
                       leading: Image.asset(
                         'assets/pdf-icon.png',
                         width: 35.0,
                         height: 35.0,
                         fit: BoxFit.cover,
                       ),
-                      title: Text(msg.content.substring(117,(msg.content.indexOf('.pdf')+1)).replaceAll('%20', ' '),style: TextStyle(fontSize: 16,),),
-                      subtitle: Text('Click to view', style: TextStyle(fontSize: 13),),
+                      title: Text(msg.content.substring(117,(msg.content.indexOf('.pdf')+1)).replaceAll('%20', ' '),style: TextStyle(fontSize: 16,color: Colors.white),),
+                      subtitle: Text('Click to view', style: TextStyle(fontSize: 13, color : Colors.white),),
                       onTap: (){
                         loadFile(msg.content).then((path) {
                           Navigator.push(

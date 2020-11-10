@@ -176,7 +176,8 @@ class _HomeState extends State<Timeline> {
                     task.description = doc.data['description'];
                     task.additionalInstruction = doc.data['additional_instruction'];
                     task.tags = doc.data['tags'];
-                    task.dateTime = doc.data['date_time']?.toDate();
+                    task.offerDeadline = doc.data['offer_deadline']?.toDate();
+                    task.taskDeadline = doc.data['task_deadline']?.toDate();
                     task.location = doc.data['location'];
                     task.fee = double.parse(doc.data['fee'].toString());
                     task.payment = doc.data['payment'];
@@ -292,7 +293,7 @@ class _HomeState extends State<Timeline> {
                                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                             children: <Widget>[
                                               Text((username!=null && username!='') ? username : 'User Name',style: TextStyle(color : Colors.lightBlue[900]),),
-                                              Divider(color: Colors.amber, thickness: 1.0,),
+                                              Divider(color: Colors.blueGrey, thickness: 1.0,),
                                               Text(taskList[index].title,style: TextStyle(fontSize: 16,color: Colors.black),),
                                               Container(height: 48, child: Text(taskList[index].description, maxLines: 3, overflow: TextOverflow.ellipsis,),),
                                               Row(

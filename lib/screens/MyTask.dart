@@ -64,7 +64,8 @@ class _HomeState extends State<MyTask> {
                     task.description = doc.data['description'];
                     task.additionalInstruction = doc.data['additional_instruction'];
                     task.tags = doc.data['tags'];
-                    task.dateTime = doc.data['date_time']?.toDate();
+                    task.offerDeadline = doc.data['offer_deadline']?.toDate();
+                    task.taskDeadline = doc.data['task_deadline']?.toDate();
                     task.location = doc.data['location'];
                     task.fee = double.parse(doc.data['fee'].toString());
                     task.payment = doc.data['payment'];
@@ -112,7 +113,8 @@ class _HomeState extends State<MyTask> {
                         task.description = doc.data['description'];
                         task.additionalInstruction = doc.data['additional_instruction'];
                         task.tags = doc.data['tags'];
-                        task.dateTime = doc.data['date_time']?.toDate();
+                        task.offerDeadline = doc.data['offer_deadline']?.toDate();
+                        task.taskDeadline = doc.data['task_deadline']?.toDate();
                         task.location = doc.data['location'];
                         task.fee = double.parse(doc.data['fee'].toString());
                         task.payment = doc.data['payment'];
@@ -162,7 +164,8 @@ class _HomeState extends State<MyTask> {
                         task.description = doc.data['description'];
                         task.additionalInstruction = doc.data['additional_instruction'];
                         task.tags = doc.data['tags'];
-                        task.dateTime = doc.data['date_time']?.toDate();
+                        task.offerDeadline = doc.data['offer_deadline']?.toDate();
+                        task.taskDeadline = doc.data['task_deadline']?.toDate();
                         task.location = doc.data['location'];
                         task.fee = double.parse(doc.data['fee'].toString());
                         task.payment = doc.data['payment'];
@@ -205,7 +208,8 @@ class _HomeState extends State<MyTask> {
                     task.description = doc.data['description'];
                     task.additionalInstruction = doc.data['additional_instruction'];
                     task.tags = doc.data['tags'];
-                    task.dateTime = doc.data['date_time']?.toDate();
+                    task.offerDeadline = doc.data['offer_deadline']?.toDate();
+                    task.taskDeadline = doc.data['task_deadline']?.toDate();
                     task.location = doc.data['location'];
                     task.fee = double.parse(doc.data['fee'].toString());
                     task.payment = doc.data['payment'];
@@ -242,7 +246,7 @@ class _TaskListViewState extends State<TaskListView> {
   final List<Task> taskList;
   _TaskListViewState(this.user, this.tab, this.taskList);
   final STATUS = [
-    {'id': 0, 'text': Text('Published',style:TextStyle(fontWeight: FontWeight.bold,fontSize:13,color: Colors.blueAccent),), 'icon': Icon(Icons.check_circle,color: Colors.blueAccent,size: 32,)},
+    {'id': 0, 'text': Text('Waiting Offer',style:TextStyle(fontWeight: FontWeight.bold,fontSize:13,color: Colors.blueAccent),), 'icon': Icon(Icons.check_circle,color: Colors.blueAccent,size: 32,)},
     {'id': 1, 'text': Text('Open',style:TextStyle(fontWeight: FontWeight.bold,fontSize:13,color: Colors.blueAccent),), 'icon': Icon(Icons.check_circle,color: Colors.blueAccent,size: 32,)},
     {'id': 2, 'text': Text('Received offer',style:TextStyle(fontWeight: FontWeight.bold,fontSize:13,color: Colors.amber),), 'icon': Icon(Icons.check_circle,color: Colors.amber,size: 32,)},
     {'id': 3, 'text': Text('Pending',style:TextStyle(fontWeight: FontWeight.bold,fontSize:13,color: Colors.blueAccent),), 'icon': Icon(Icons.swap_horizontal_circle,color: Colors.blueAccent,size: 32,)},
@@ -250,6 +254,7 @@ class _TaskListViewState extends State<TaskListView> {
     {'id': 5, 'text': Text('Completed',style:TextStyle(fontWeight: FontWeight.bold,fontSize:13,color: Colors.greenAccent[700]),), 'icon': Icon(Icons.check_circle,color: Colors.greenAccent[700],)},
     {'id': 6, 'text': Text('Cancelled',style:TextStyle(fontWeight: FontWeight.bold,fontSize:13,color: Colors.red),), 'icon': Icon(Icons.remove_circle,color: Colors.red,)},
     {'id': 7, 'text': Text('Expired',style:TextStyle(fontWeight: FontWeight.bold,fontSize:13,color: Colors.red),), 'icon': Icon(Icons.timer_off,color: Colors.red,)},
+    {'id': 8, 'text': Text('Overdue',style:TextStyle(fontWeight: FontWeight.bold,fontSize:13,color: Colors.red),), 'icon': Icon(Icons.timer_off,color: Colors.red,)},
   ];
 
   @override
@@ -311,13 +316,23 @@ class _TaskListViewState extends State<TaskListView> {
                 subtitle: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    Row(
+
+                    (statusId == 0 || statusId == 1 || statusId == 2 || statusId == 3 ) ? Row(
                       children: [
                         Icon(Icons.date_range, color: Colors.grey, size: 16,),
                         SizedBox(width: 5,),
-                        Text(taskList[index].dateTime!=null ? DateFormat('yyyy-MM-dd  h:mm a').format(taskList[index].dateTime).toString(): '-',),
+                        Text(taskList[index].offerDeadline!=null ? DateFormat('yyyy-MM-dd  h:mm a').format(taskList[index].offerDeadline).toString(): '-',),
                       ],
-                    ),
+                    ) : Container(),
+
+                    (statusId == 4) ? Row(
+                      children: [
+                        Icon(Icons.date_range, color: Colors.grey, size: 16,),
+                        SizedBox(width: 5,),
+                        Text(taskList[index].taskDeadline!=null ? DateFormat('yyyy-MM-dd  h:mm a').format(taskList[index].taskDeadline).toString(): '-',),
+                      ],
+                    ) : Container(),
+
                     Row(
                       children: [
                         Icon(Icons.location_on, color: Colors.grey, size: 16,),
@@ -383,6 +398,9 @@ class _TaskListViewState extends State<TaskListView> {
               statusId = 6;
               break;
             case 'Expired':
+              statusId = 7;
+              break;
+            case 'Overdue':
               statusId = 7;
               break;
           }
