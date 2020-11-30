@@ -8,7 +8,7 @@ class Task {
   DocumentReference updatedBy;
   DateTime updatedAt;
   Object author;
-  Object serviceProvider;
+  // Object serviceProvider;
   String category;
   String title;
   String description;
@@ -26,4 +26,6 @@ class Task {
   int offerNum;
   double rating;
   DateTime upcomingDeadline;
+  String creditId;
+  String debitId;
 }

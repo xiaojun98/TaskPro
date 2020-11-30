@@ -70,7 +70,7 @@ class _HomeState extends State<MySchedule> {
                   Expanded(
                     child: Container(
                       padding: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(5)),
+                      decoration: BoxDecoration(color: Colors.blueGrey[50], borderRadius: BorderRadius.circular(5)),
                       child: Text( 'My Posted Task',style: TextStyle(fontWeight: FontWeight.bold, ),),
                     ),
                   ),
@@ -103,7 +103,6 @@ class _HomeState extends State<MySchedule> {
                     task.updatedBy = doc.data['updated_by'];
                     task.updatedAt = doc.data['updated_at']?.toDate();
                     task.author = doc.data['author'];
-                    task.serviceProvider = doc.data['service_provider'];
                     task.category = doc.data['category'];
                     task.title = doc.data['title'];
                     task.description = doc.data['description'];
@@ -121,7 +120,9 @@ class _HomeState extends State<MySchedule> {
                     task.offerNum = doc.data['offer_num'];
                     task.rating = doc.data['rating'];
                     if(task.taskDeadline.difference(DateTime.now()).inMilliseconds > 0){
-                      taskList.add(task);
+                      if(task.status!= 'Completed' && task.status!= 'Expired' && task.status!= 'Cancelled'){
+                        taskList.add(task);
+                      }
                       if(task.offeredBy == null){
                         eventList[task.offerDeadline] = [task.title];
                         task.upcomingDeadline=task.offerDeadline;
@@ -157,7 +158,6 @@ class _HomeState extends State<MySchedule> {
                             task.updatedBy = doc.data['updated_by'];
                             task.updatedAt = doc.data['updated_at']?.toDate();
                             task.author = doc.data['author'];
-                            task.serviceProvider = doc.data['service_provider'];
                             task.category = doc.data['category'];
                             task.title = doc.data['title'];
                             task.description = doc.data['description'];
@@ -175,7 +175,10 @@ class _HomeState extends State<MySchedule> {
                             task.offerNum = doc.data['offer_num'];
                             task.rating = doc.data['rating'];
                             if(task.offerDeadline.difference(DateTime.now()).inMilliseconds > 0 || task.taskDeadline.difference(DateTime.now()).inMilliseconds > 0){
-                              taskList.add(task);
+                              //redundant
+                              if(task.status!= 'Completed' && task.status!= 'Expired' && task.status!= 'Cancelled'){
+                                taskList.add(task);
+                              }
                               if(task.status=='Ongoing'){
                                 eventList[task.taskDeadline] = [task.title];
                                 task.upcomingDeadline=task.taskDeadline;
@@ -232,7 +235,7 @@ class _MyListViewState extends State<MyListView> {
           bool ownTask = taskList[index].createdBy.documentID == user.uid;
           return Card(
             elevation: 1,
-            color: (ownTask) ? Colors.white : Colors.blueGrey,
+            color: (ownTask) ? Colors.blueGrey[50] : Colors.blueGrey,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(5),
             ),

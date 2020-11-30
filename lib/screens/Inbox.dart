@@ -212,8 +212,8 @@ class _HomeState extends State<Inbox> {
         },
         leading : Icon(Icons.notifications),
         title: Text(notiItem.title),
-        subtitle:Text(notiItem.content,overflow: TextOverflow.ellipsis),
-        trailing: Text(DateFormat.yMMMd().format(notiItem.sentAt).substring(0,3)),
+        subtitle:Text(notiItem.content.replaceAll("\\n", " "),overflow: TextOverflow.ellipsis),
+        trailing: Text(DateFormat.yMMMd().format(notiItem.sentAt)),
       ),
     );
 
@@ -256,16 +256,17 @@ class _NotificationState extends State<ViewNotification> {
             Text(notificationItem.title, style: _style1,),
             SizedBox(height: 5,),
             Text('id : ' + notificationItem.id, style: _style2,),
+            SizedBox(height: 5,),
+            Text(DateFormat.yMMMMEEEEd().format((notificationItem.sentAt)) + ' at ' + DateFormat.Hms().format(notificationItem.sentAt)),
             SizedBox(height: 10,),
             Container(color: Colors.blueGrey, height: 1,),
             SizedBox(height: 10,),
             (notificationItem.imgHeader == '' ) ? Container() : Image.network(notificationItem.imgHeader),
             SizedBox(height: 10,),
-            Text(notificationItem.content),
+            Text(notificationItem.content.replaceAll("\\n", " \n")),
           ],
         ),
       ),
-
     ));
   }
 }

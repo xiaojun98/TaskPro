@@ -19,7 +19,7 @@ class ViewReport extends StatefulWidget {
 class _HomeState extends State<ViewReport> {
   Report report;
   _HomeState(this.report);
-  TextStyle _style = TextStyle(fontWeight: FontWeight.bold);
+  TextStyle _style = TextStyle(fontWeight: FontWeight.bold,color: Colors.white);
 
   @override
   Widget build(BuildContext context) {
@@ -35,14 +35,14 @@ class _HomeState extends State<ViewReport> {
           padding: EdgeInsets.all(20),
           margin: EdgeInsets.symmetric(vertical: 10),
           child: Container(
-            decoration: BoxDecoration(border: Border.all(color: Colors.amber), borderRadius: BorderRadius.circular(5),),
+            decoration: BoxDecoration(border: Border.all(color: Colors.blueGrey), borderRadius: BorderRadius.circular(5),),
             child: Column(
              children : [
                Row(
                  children: [
                    Container(
                      padding: EdgeInsets.only(left: 5),
-                     color: Colors.amber,
+                     color: Colors.blueGrey,
                      width: 90,
                      child: Column(
                        crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,7 +95,6 @@ class _HomeState extends State<ViewReport> {
                              task.updatedBy = doc.data['updated_by'];
                              task.updatedAt = doc.data['updated_at']?.toDate();
                              task.author = doc.data['author'];
-                             task.serviceProvider = doc.data['service_provider'];
                              task.category = doc.data['category'];
                              task.title = doc.data['title'];
                              task.description = doc.data['description'];
@@ -154,7 +153,7 @@ class _HomeState extends State<ViewReport> {
                  children: [
                    Container(
                      padding: EdgeInsets.only(left: 5),
-                     color: Colors.amber,
+                     color: Colors.blueGrey,
                      child: Column(
                        crossAxisAlignment: CrossAxisAlignment.start,
                        children: [
@@ -177,7 +176,7 @@ class _HomeState extends State<ViewReport> {
                    ),
                    (report.suggestion != '') ? Container(
                      padding: EdgeInsets.only(left: 5),
-                     color: Colors.amber,
+                     color: Colors.blueGrey,
                      child: Column(
                        crossAxisAlignment: CrossAxisAlignment.start,
                        children: [

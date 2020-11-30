@@ -312,8 +312,8 @@ class _HomeState extends State<CreateReport> {
                           },
                         ),
                       ),
-                      (taskId != null || category == 'Task Related Issues') ? Text('Task ID',style: _style,) : Container(),
-                      (taskId != null || category == 'Task Related Issues') ?
+                      (taskId != null || category == 'Task Related Issues' || category == 'Refund') ? Text('Task ID',style: _style,) : Container(),
+                      (taskId != null || category == 'Task Related Issues' || category == 'Refund') ?
                       Padding(
                         padding: const EdgeInsets.fromLTRB(0,5,0,5),
                         child: TextFormField(

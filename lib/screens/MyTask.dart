@@ -58,7 +58,6 @@ class _HomeState extends State<MyTask> {
                     task.updatedBy = doc.data['updated_by'];
                     task.updatedAt = doc.data['updated_at']?.toDate();
                     task.author = doc.data['author'];
-                    task.serviceProvider = doc.data['service_provider'];
                     task.category = doc.data['category'];
                     task.title = doc.data['title'];
                     task.description = doc.data['description'];
@@ -83,7 +82,8 @@ class _HomeState extends State<MyTask> {
             ),
             // offered tab
             StreamBuilder<QuerySnapshot>(
-              stream: Firestore.instance.collection('offer').where('user_id', isEqualTo: user.uid).snapshots(),
+              stream: Firestore.instance.collection('offer')
+                  .where('user_id', isEqualTo: user.uid).snapshots(),
               builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
                 List<dynamic> taskIdList = new List();
                 if(!snapshot.hasData) {
@@ -93,7 +93,8 @@ class _HomeState extends State<MyTask> {
                     return docSnapshot.data['task_id'];
                   }).toList();
                   return StreamBuilder<QuerySnapshot>(
-                    stream: Firestore.instance.collection('task').where('id', whereIn: taskIdList).snapshots(),
+                    stream: Firestore.instance.collection('task').
+                    where('id', whereIn: taskIdList).snapshots(),
                     builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
                       if(!snapshot.hasData) {
                         return Center(child: Text('No offered found.', style: TextStyle(color: Colors.grey),),);
@@ -107,7 +108,6 @@ class _HomeState extends State<MyTask> {
                         task.updatedBy = doc.data['updated_by'];
                         task.updatedAt = doc.data['updated_at']?.toDate();
                         task.author = doc.data['author'];
-                        task.serviceProvider = doc.data['service_provider'];
                         task.category = doc.data['category'];
                         task.title = doc.data['title'];
                         task.description = doc.data['description'];
@@ -124,7 +124,9 @@ class _HomeState extends State<MyTask> {
                         task.isCompleteByProvider = doc.data['is_complete_by_provider'];
                         task.offerNum = doc.data['offer_num'];
                         task.rating = doc.data['rating'];
-                        taskList.add(task);
+                        if(task.status!= 'Completed' && task.status!= 'Expired' && task.status!= 'Cancelled'){
+                          taskList.add(task);
+                        }
                       }
                       return TaskListView(user: user, tab: 'Offered', taskList: taskList,);
                     },
@@ -158,7 +160,6 @@ class _HomeState extends State<MyTask> {
                         task.updatedBy = doc.data['updated_by'];
                         task.updatedAt = doc.data['updated_at']?.toDate();
                         task.author = doc.data['author'];
-                        task.serviceProvider = doc.data['service_provider'];
                         task.category = doc.data['category'];
                         task.title = doc.data['title'];
                         task.description = doc.data['description'];
@@ -175,7 +176,9 @@ class _HomeState extends State<MyTask> {
                         task.isCompleteByProvider = doc.data['is_complete_by_provider'];
                         task.offerNum = doc.data['offer_num'];
                         task.rating = doc.data['rating'];
-                        taskList.add(task);
+                        if(task.status == 'Open'){
+                          taskList.add(task);
+                        }
                       }
                       return TaskListView(user: user, tab: 'Bookmark', taskList: taskList,);
                     },
@@ -202,7 +205,6 @@ class _HomeState extends State<MyTask> {
                     task.updatedBy = doc.data['updated_by'];
                     task.updatedAt = doc.data['updated_at']?.toDate();
                     task.author = doc.data['author'];
-                    task.serviceProvider = doc.data['service_provider'];
                     task.category = doc.data['category'];
                     task.title = doc.data['title'];
                     task.description = doc.data['description'];

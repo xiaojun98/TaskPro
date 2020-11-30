@@ -69,9 +69,18 @@ class _HomeState extends State<Register> {
                         AuthCredential credential = PhoneAuthProvider
                             .getCredential(
                             verificationId: verfId, smsCode: _code);
-                        AuthResult result = await _auth.signInWithCredential(credential).catchError((e){showDialog(context: context,child: Text(e.toString(), style : TextStyle(fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'OpenSansR')));});
+                        AuthResult result = await _auth.signInWithCredential(credential).catchError((e){
+                          Navigator.of(context).pop();
+                          showDialog(
+                              context: context,
+                              barrierDismissible: true,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: Text('Error'),
+                                  content: Text('Check your verification code and try again.'),
+                                );
+                              });
+                        });
                         FirebaseUser user = result.user;
                         if (user != null) {
                           LoadingDialog.showLoadingDialog(context, _keyLoader, "Validating...");
@@ -343,6 +352,12 @@ class _HomeState extends State<Register> {
         'joined' : new DateTime.now(),
         'achievement' : '',
         'about' : '-',
+      });
+    }).then((value) async {
+      await db.collection("wallet").document(_uid).setData({
+        'stripe_account' : false,
+        'stripe_onboard' : false,
+        'stripe_acc_id' : '',
       });
     });
   }

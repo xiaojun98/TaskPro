@@ -526,6 +526,7 @@ class _HomeState extends State<ChatWindow> {
   }
 
   Widget viewFile (String pdfPath) {
+    print (pdfPath);
     return PDFViewerScaffold(
         appBar: AppBar(
           title: Text("PDF View"),

@@ -100,35 +100,6 @@ class _HomeState extends State<Timeline> {
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
-//            Padding(
-//              padding: EdgeInsets.symmetric(horizontal: 20,vertical: 25),
-//              child: Row(
-//                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                crossAxisAlignment: CrossAxisAlignment.center,
-//                children: <Widget>[
-//                  Text('Popular Tags', style: TextStyle(fontSize: 18,fontWeight: FontWeight.bold,fontFamily: 'OpenSans'),),
-//                  InkWell(
-//                      onTap: (){},
-//                      child: Text('View all', style: TextStyle(fontSize: 12,fontWeight: FontWeight.bold,fontFamily: 'OpenSans',),)),
-//                ],
-//              )
-//            ),
-//            Container(
-//              height: 55,
-//              padding: EdgeInsets.only(left : 5),
-//              child: ListView.builder(
-//                scrollDirection: Axis.horizontal,
-//                itemCount: popularTags.length,
-//                itemBuilder: (context,index){
-//                  return Container(
-//                    margin: EdgeInsets.only(left: 15,bottom: 15),
-//                    padding: EdgeInsets.all(10),
-//                    decoration: BoxDecoration(color : Colors.amber[100], borderRadius: BorderRadius.circular(20)),
-//                    child: Text(popularTags[index].tagName + ' (${popularTags[index].tagCount})',textAlign: TextAlign.center,style : TextStyle(fontSize: 16)),);
-//                }
-//              ),
-//            ),
-//            Divider(color: Colors.amber, thickness: 1.5,),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20,),
               child: Row(
@@ -144,8 +115,7 @@ class _HomeState extends State<Timeline> {
                         dropdownValue = newValue;
                       });
                     },
-                    items: <String>['Order by','Date', 'Commission', 'Title']
-                        .map<DropdownMenuItem<String>>((String value) {
+                    items: <String>['Order by','Date', 'Commission', 'Title'].map<DropdownMenuItem<String>>((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
                         child: Text(value),
@@ -170,7 +140,6 @@ class _HomeState extends State<Timeline> {
                     task.updatedBy = doc.data['updated_by'];
                     task.updatedAt = doc.data['updated_at']?.toDate();
                     task.author = doc.data['author'];
-                    task.serviceProvider = doc.data['service_provider'];
                     task.category = doc.data['category'];
                     task.title = doc.data['title'];
                     task.description = doc.data['description'];
@@ -187,6 +156,12 @@ class _HomeState extends State<Timeline> {
                     task.isCompleteByProvider = doc.data['is_complete_by_provider'];
                     task.offerNum = doc.data['offer_num'];
                     task.rating = doc.data['rating'];
+                    if(task.status=='Ongoing'){
+                      task.upcomingDeadline=task.taskDeadline;
+                    }
+                    else{
+                      task.upcomingDeadline=task.offerDeadline;
+                    }
                     if(task.createdBy.documentID != user.uid) {
                       if(searching) {
                         if(task.title.contains(searchTerm)||task.description.contains(searchTerm)||task.category.contains(searchTerm)||(task.tags!=null && task.tags.contains(searchTerm)))
@@ -204,6 +179,17 @@ class _HomeState extends State<Timeline> {
                        } else {
                         taskList.add(task);
                       }
+                    }
+                  }
+                  if (dropdownValue != 'Order By'){
+                    if (dropdownValue == 'Date'){
+                      taskList.sort((a,b) => a.upcomingDeadline.compareTo(b.upcomingDeadline));
+                    }
+                    else if (dropdownValue == 'Commission'){
+                      taskList.sort((a,b) => a.fee.compareTo(b.fee));
+                    }
+                    else if(dropdownValue == 'Title'){
+                      taskList.sort((a,b) => a.title.compareTo(b.title));
                     }
                   }
                   return Container(
@@ -364,14 +350,6 @@ class _HomeState extends State<Timeline> {
                 }
               },
             ),
-//            Padding(padding: EdgeInsets.symmetric(horizontal: 15), child: Divider(color: Colors.grey, thickness: 0.5,),),
-//            Row(
-//              mainAxisAlignment: MainAxisAlignment.center,
-//              children: [
-//                Icon(Icons.sentiment_dissatisfied, color: Colors.grey, size: 12,),
-//                Text(' No more task...', style: TextStyle(color: Colors.grey, fontSize: 12),)
-//              ],
-//            ),
           ]
         ),
       ),

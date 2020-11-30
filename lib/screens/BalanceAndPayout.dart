@@ -1,8 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
+import 'package:testapp/models/transaction.dart';
+import 'package:testapp/screens/Setup%20Stripe.dart';
+import 'package:testapp/services/loadingDialog.dart';
 
 class BalanceAndPayout extends StatefulWidget {
   FirebaseUser user;
@@ -15,8 +20,10 @@ class _HomeState extends State<BalanceAndPayout> {
   FirebaseUser user;
   _HomeState(this.user);
 
+  final _keyLoader = GlobalKey<State>();
   List<Payout> debitList = [];
-  int balance = 0;
+  List<Payout> historyList = [];
+  double balance = 0.00;
   TextStyle _style1 = TextStyle(fontFamily: 'OpenSans-R',fontWeight:FontWeight.bold,fontSize: 18);
 
   @override
@@ -29,33 +36,84 @@ class _HomeState extends State<BalanceAndPayout> {
         backgroundColor: Colors.amberAccent[400],
       ),
       body: SingleChildScrollView(
-          child: StreamBuilder(
-              stream: Firestore.instance
-                  .collection('wallet')
-                  .document(user.uid)
-                  .collection('debit')
-                  .where('category', isEqualTo: "debit")
-                  .snapshots(),
-              builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                if(!snapshot.hasData) {
-                  return Text("No Data");
-                } else {
-                  for (DocumentSnapshot doc in snapshot.data.documents) {
-                    Payout debit = new Payout();
-                    debit.id = doc.documentID;
-                    debit.amount = doc.data['amount'];
-                    debit.debitCreatedAt = doc.data['debitCreatedAt']?.toDate();
-                    debit.payout = doc.data['payout'];
-                    debit.taskRef = doc.data['taskRef'];
-                    debitList.add(debit);
-                    balance += debit.amount;
+          child: StreamBuilder<DocumentSnapshot>(
+              stream: Firestore.instance.collection('wallet').document(user.uid).snapshots(),
+              builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+                if(snapshot.data['stripe_onboard']==true){
+                  return StreamBuilder(
+                  stream: Firestore.instance
+                      .collection('wallet')
+                      .document(user.uid)
+                      .collection('debit')
+                      .where('category', isEqualTo: "Debit")
+                      .snapshots(),
+                  builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                  if(!snapshot.hasData) {
+                    return Text("No Data");
+                  } else {
+                    for (DocumentSnapshot doc in snapshot.data.documents) {
+                      Payout debit = new Payout();
+                      debit.id = doc.documentID;
+                      debit.amount = double.parse(doc.data['amount'].toString());
+                      debit.createdAt = doc.data['createdAt']?.toDate();
+                      debit.payout = doc.data['payout'];
+                      debit.taskRef = doc.data['taskRef'];
+                      debitList.add(debit);
+                      balance += debit.amount;
+                    }
                   }
+                  return StreamBuilder(
+                    stream: Firestore.instance
+                        .collection('wallet')
+                        .document(user.uid)
+                        .collection('debit')
+                        .where('category', isEqualTo: "Payout")
+                        .snapshots(),
+                    builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+
+                      if(!snapshot.hasData) {
+                        return Center(
+                            child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)));
+                      } else {
+                        for (DocumentSnapshot doc in snapshot.data.documents) {
+                          Payout history = new Payout();
+                          history.id = doc.documentID;
+                          history.amount = double.parse(doc.data['amount'].toString())* -1.0;
+                          history.createdAt = doc.data['createdAt']?.toDate();
+                          history.status = doc.data['status'];
+                          historyList.add(history);
+                          balance -= history.amount;
+                        }
+                        return buildContext(context);
+                      }
+                    },
+                  );
+                  // return buildContext(context);
+                  },);
                 }
-                return buildContext(context);
-              },
-            ),
+                else{
+                  return Container(
+                    padding: EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text('You have not set up your Stripe. Go to set up Stripe to enable payouts.'),
+                        SizedBox(height: 20,),
+                        FlatButton(
+                          child: Text("Setup Stripe", style: TextStyle(color: Colors.white),),
+                          color: Colors.blueGrey,
+                          onPressed: (){
+                            Navigator.pop(context);
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => SetupStripe(user : user)));
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              }
           )
-      );
+      ));
   }
 
   Widget buildContext(context){
@@ -63,7 +121,7 @@ class _HomeState extends State<BalanceAndPayout> {
       padding: EdgeInsets.all(20),
       child: Column(
         children : [
-          Text("Debit Balance", style: _style1,),
+          Text("My Debit Balance", style: _style1,),
           SizedBox(height: 10,),
           Container(
               height: 100,
@@ -80,50 +138,57 @@ class _HomeState extends State<BalanceAndPayout> {
               child: Text('RM ' + balance.toString(), style: TextStyle(fontFamily: 'OpenSans-R',fontWeight:FontWeight.w100,fontSize: 35),)
           ),
           SizedBox(height: 30,),
-          RaisedButton(
-              child: Text("Withdraw Now"),
+          balance == 0 ? RaisedButton(
+              child: Text("Payout Now"),
               color: Colors.amber,
               onPressed: (){
-
+                Fluttertoast.showToast(
+                    msg: "RM0.00 : No payouts available.",
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.BOTTOM,
+                    timeInSecForIosWeb: 1,
+                    backgroundColor: Colors.black54,
+                    textColor: Colors.white,
+                    fontSize: 16.0
+                );
+              }
+          ) :RaisedButton(
+              child: Text("Payout Now"),
+              color: Colors.amber,
+              onPressed: (){
+                LoadingDialog.showLoadingDialog(context, _keyLoader, "Payout to Stripe..");
+                withdraw();
               }
           ),
           SizedBox(height: 30,),
           Text("Payout History" , style: _style1,),
-          StreamBuilder(
-            stream: Firestore.instance
-                .collection('wallet')
-                .document(user.uid)
-                .collection('debit')
-                .where('category', isEqualTo: "payout")
-                .snapshots(),
-            builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-
-              if(!snapshot.hasData) {
-                return Center(
-                    child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)));
-              } else {
-                List<Payout> historyList = [];
-                for (DocumentSnapshot doc in snapshot.data.documents) {
-                  Payout history = new Payout();
-                  history.id = doc.documentID;
-                  history.amount = doc.data['amount']*-1;
-                  history.payoutCreatedAt = doc.data['payoutCreatedAt']?.toDate();
-                  history.status = doc.data['status'];
-                  historyList.add(history);
-                }
-                return ListView.builder(
-                  shrinkWrap: true,
-                  padding: EdgeInsets.all(10.0),
-                  itemBuilder: (context, index) => buildItem(historyList[index]),
-                  itemCount: snapshot.data.documents.length,
-                  reverse: true,
-                );
-              }
-            },
+          ListView.builder(
+            shrinkWrap: true,
+            padding: EdgeInsets.all(10.0),
+            itemBuilder: (context, index) => buildItem(historyList[index]),
+            itemCount: historyList.length,
+            reverse: true,
           ),
         ],
       ),
     );
+  }
+
+  void withdraw() async{
+    await Firestore.instance.collection('wallet').document(user.uid).get().then((stripeAcc) {
+      var callable = CloudFunctions.instance.getHttpsCallable(functionName: 'createTransfer');
+      callable.call(<String, dynamic>{
+        'userId' : user.uid,
+        'stripe_acc_id': stripeAcc.data['stripe_acc_id'],
+        'amount' : (balance*100).toInt().toString(),
+      },).then((value) {
+        Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
+      }).catchError((e){
+        print(e.toString());
+      });
+      // acc.stripeAcc = value.data['stripe_acc_id'];
+    });
+
   }
 
   Widget buildItem(Payout item){
@@ -131,21 +196,13 @@ class _HomeState extends State<BalanceAndPayout> {
     child: ListTile(
       title: Text('Withdrew RM' + item.amount.toString()),
       subtitle: Text('Status : ' + item.status),
-      trailing: Text(DateFormat.MMMMd().format(item.payoutCreatedAt)),
+      trailing: Text(DateFormat.MMMMd().format(item.createdAt)),
     ),
     );
   }
 }
 
-class Payout{
-  String id;
-  int amount;
-  DateTime debitCreatedAt;
-  DateTime payoutCreatedAt;
-  Object taskRef;
-  bool payout;
-  String status;
-}
+
 
 
 

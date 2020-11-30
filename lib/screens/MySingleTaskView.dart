@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 import 'package:testapp/screens/CreateTask.dart';
 import '../models/Task.dart';
@@ -225,7 +227,26 @@ class _HomeState extends State<MySingleTaskView> {
                   ],
                 ),
                 SizedBox(height: 5,),
-                Text('ID: '+task.id,style: TextStyle(fontFamily: 'OpenSans-R', fontSize: 12, color: Colors.grey)),
+                Row(
+                    children: [
+                      Text('ID: '+task.id,style: TextStyle(fontFamily: 'OpenSans-R', fontSize: 12, color: Colors.grey)),
+                      IconButton(
+                        icon: Icon(Icons.copy,color: Colors.grey,size: 12,),
+                        onPressed: (){
+                          Clipboard.setData(ClipboardData(text: task.id));
+                          Fluttertoast.showToast(
+                              msg: "Task ID Copied",
+                              toastLength: Toast.LENGTH_SHORT,
+                              gravity: ToastGravity.BOTTOM,
+                              timeInSecForIosWeb: 1,
+                              backgroundColor: Colors.black54,
+                              textColor: Colors.white,
+                              fontSize: 16.0
+                          );
+                        }
+                      ),
+                    ]
+                ),
                 SizedBox(height: 20,),
                 Container(
                   decoration: BoxDecoration(border: Border.all(color: Colors.blueGrey), borderRadius: BorderRadius.circular(10)),
@@ -373,6 +394,7 @@ class _HomeState extends State<MySingleTaskView> {
                     );
                   },
                 ),),
+
                 SizedBox(height: 30,),
                 buildActionButtons(context, user, task, ownTask),
             ]),
@@ -558,7 +580,7 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
                                                                           Firestore.instance.collection('wallet').document(user.uid).collection('credit').add({
                                                                             'amount' : task.fee,
                                                                             'createdAt' : DateTime.now(),
-                                                                            'status' : 'hold',
+                                                                            'status' : 'Hold',
                                                                             'taskRef' : Firestore.instance.document('task/'+ task.id),
                                                                             'creditTarget' : Firestore.instance.document('users/'+offerProfiles[index].id),
                                                                           }).then((value) => {
@@ -567,6 +589,7 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
                                                                             'status': 'Ongoing',
                                                                             'updated_by': Firestore.instance.document('users/'+user.uid),
                                                                             'updated_at': DateTime.now(),
+                                                                            'creditId' : value.documentID,
                                                                             })
                                                                           });
                                                                         }
@@ -617,21 +640,40 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
         ],
       );
     } else if(task.status=='Ongoing') {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          FlatButton(
-            onPressed: (){
-              Firestore.instance.collection('task').document(task.id).updateData({
-                'is_complete_by_author': true,
-                'status': task.isCompleteByProvider ? 'Completed' : 'Ongoing',
-              });
-              Navigator.pop(context);
-            },
-            child: Text ('Mark Complete',
-              style: TextStyle(fontSize: 16,color: Colors.black,fontFamily: 'OpenSansR'),),
-            shape: new RoundedRectangleBorder(borderRadius: new BorderRadius.circular(30.0)),
-            color: Colors.amber,
+      return Column(
+        children: [
+          task.isCompleteByProvider ? Column(
+            children: [
+              SizedBox(height: 20,),
+              Text('Service provider has marked complete.'),
+              SizedBox(height: 10,),
+            ],
+          ): Container(),
+          task.isCompleteByAuthor ? Column(
+            children: [
+              SizedBox(height: 20,),
+              Text('You have marked complete.'),
+              SizedBox(height: 10,),
+            ],
+          ): Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              FlatButton(
+                onPressed: (){
+                  Firestore.instance.collection('task').document(task.id).updateData({
+                    'is_complete_by_author': true,
+                    'status': task.isCompleteByProvider ? 'Completed' : 'Ongoing',
+                  }).then((value) {
+                    checkTaskCompleted(task.id);
+                  });
+                  Navigator.pop(context);
+                },
+                child: Text ('Mark Complete',
+                  style: TextStyle(fontSize: 16,color: Colors.black,fontFamily: 'OpenSansR'),),
+                shape: new RoundedRectangleBorder(borderRadius: new BorderRadius.circular(30.0)),
+                color: Colors.amber,
+              ),
+            ],
           ),
         ],
       );
@@ -700,30 +742,100 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
         },
       );
     } else if(task.status=='Ongoing') {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      return
+      Column(
         children: [
-          FlatButton(
-            onPressed: () {
-              Firestore.instance.collection('task').document(task.id).updateData({
-                'is_complete_by_provider': true,
-                'status': task.isCompleteByAuthor ? 'Completed' : 'Ongoing',
-              });
-            },
-            child: Row(
-              children: [
-                Text('Mark Complete', style: TextStyle(fontSize: 16,
-                    color: Colors.black,
-                    fontFamily: 'OpenSansR'),),
-              ],
-            ),
-            shape: RoundedRectangleBorder(
-                borderRadius: new BorderRadius.circular(30.0)),
-            color: Colors.amber,
+          task.isCompleteByProvider ? Column(
+            children: [
+              SizedBox(height: 20,),
+              Text('You has marked complete.'),
+              SizedBox(height: 10,),
+            ],
+          ): Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FlatButton(
+                onPressed: () {
+                  Firestore.instance.collection('task').document(task.id).updateData({
+                    'is_complete_by_provider': true,
+                    'status': task.isCompleteByAuthor ? 'Completed' : 'Ongoing',
+                  }).then((value) {
+                    checkTaskCompleted(task.id);
+                    Navigator.pop(context);
+                  });
+                },
+                child: Row(
+                  children: [
+                    Text('Mark Complete', style: TextStyle(fontSize: 16,
+                        color: Colors.black,
+                        fontFamily: 'OpenSansR'),),
+                  ],
+                ),
+                shape: RoundedRectangleBorder(
+                    borderRadius: new BorderRadius.circular(30.0)),
+                color: Colors.amber,
+              ),
+            ],
           ),
+          task.isCompleteByAuthor ? Column(
+            children: [
+              SizedBox(height: 20,),
+              Text('Author has marked complete.'),
+              SizedBox(height: 10,),
+            ],
+          ): Container(),
         ],
       );
     }
     return null;
   }
+
+
+}
+
+checkTaskCompleted(String taskId) async {
+  Task checkTask = new Task();
+  Firestore.instance.collection("task").document(taskId).get().then((doc) {
+    checkTask.id = doc.data['id'];
+    checkTask.createdBy = doc.data['created_by'];
+    checkTask.createdAt = doc.data['created_at']?.toDate();
+    checkTask.updatedBy = doc.data['updated_by'];
+    checkTask.updatedAt = doc.data['updated_at']?.toDate();
+    checkTask.author = doc.data['author'];
+    checkTask.category = doc.data['category'];
+    checkTask.title = doc.data['title'];
+    checkTask.description = doc.data['description'];
+    checkTask.additionalInstruction = doc.data['additional_instruction'];
+    checkTask.tags = doc.data['tags'];
+    checkTask.offerDeadline = doc.data['offer_deadline']?.toDate();
+    checkTask.taskDeadline = doc.data['task_deadline']?.toDate();
+    checkTask.location = doc.data['location'];
+    checkTask.fee = double.parse(doc.data['fee'].toString());
+    checkTask.payment = doc.data['payment'];
+    checkTask.status = doc.data['status'];
+    checkTask.offeredBy = doc.data['offered_by'];
+    checkTask.isCompleteByAuthor = doc.data['is_complete_by_author'];
+    checkTask.isCompleteByProvider = doc.data['is_complete_by_provider'];
+    checkTask.offerNum = doc.data['offer_num'];
+    checkTask.rating = doc.data['rating'];
+    checkTask.creditId = doc.data['creditId'];
+    if (checkTask.isCompleteByAuthor && checkTask.isCompleteByProvider){
+      Firestore.instance.collection('wallet').document(checkTask.offeredBy.documentID).collection("debit").add({
+        'amount' : checkTask.fee,
+        'category' : 'Debit',
+        'createdAt' : DateTime.now(),
+        'payout' : false,
+        'status' : 'Success',
+        'taskRef' : '/task/$taskId',
+      }).then((value) {
+        Firestore.instance.collection('task').document(taskId).updateData({
+          'debitId' : value.documentID,
+        });
+      });
+    }
+  }).then((value) {
+    Firestore.instance.collection('wallet').document(checkTask.createdBy.documentID).collection('credit').document(checkTask.creditId).updateData({
+        'status' : 'Success',
+    });
+  });
 }

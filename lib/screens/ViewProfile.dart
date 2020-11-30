@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:flutter/services.dart';
 import 'package:testapp/models/Profile.dart';
 import 'ChatWindow.dart';
 import 'CreateReport.dart';
@@ -152,12 +154,32 @@ class _HomeState extends State<ViewProfile> {
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold
                                 ),),
-                                SizedBox(height: 5),
-                                Text("ID: " + profile.id, style: TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.black26,
-                                ),),
-                                SizedBox(height: 10),
+                                Container(
+                                  height: 35,
+                                  child: Row(
+                                      children: [
+                                        Container(
+                                          child: Text('ID:'+profile.id,style: TextStyle(fontFamily: 'OpenSans-R', fontSize: 10, color: Colors.black26,), overflow: TextOverflow.ellipsis),
+                                          width: 120,
+                                        ),
+                                        IconButton(
+                                            icon: Icon(Icons.copy,color: Colors.black26,size: 12,),
+                                            onPressed: (){
+                                              Clipboard.setData(ClipboardData(text: profile.id));
+                                              Fluttertoast.showToast(
+                                                  msg: "Profile ID Copied",
+                                                  toastLength: Toast.LENGTH_SHORT,
+                                                  gravity: ToastGravity.BOTTOM,
+                                                  timeInSecForIosWeb: 1,
+                                                  backgroundColor: Colors.black54,
+                                                  textColor: Colors.white,
+                                                  fontSize: 16.0
+                                              );
+                                            }
+                                        ),
+                                      ]
+                                  ),
+                                ),
                                 Row(
                                   children: <Widget>[
                                     Icon(Icons.location_on,size: 15,),

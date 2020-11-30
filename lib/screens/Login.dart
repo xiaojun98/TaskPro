@@ -61,11 +61,17 @@ class _HomeState extends State<Login> {
                             verificationId: verfId, smsCode: _code);
                         FirebaseUser user;
                         AuthResult result = await _auth.signInWithCredential(credential).catchError((e){
-                          showDialog(context: context,
-                              child: Text(e.toString(), style : TextStyle(fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'OpenSansR'))
-                          );});
+                          Navigator.of(context).pop();
+                          showDialog(
+                            context: context,
+                            barrierDismissible: true,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: Text('Error Login'),
+                                content: Text('Error : Check your verification code and try again.'),
+                              );
+                            });
+                        });
                         user = result.user;
 
                         if (user != null) {
@@ -143,15 +149,51 @@ class _HomeState extends State<Login> {
                     String _input = _phnumController.text.trim();
                     final _phnum = (!_input.contains('+6')) ? '+6'+_input : _input;
                     print(_phnum);
+                    int status;
                     QuerySnapshot result = await Firestore.instance
                         .collection('users')
                         .where('ph_num', isEqualTo: _phnum)
+                        // .where('status' , isEqualTo: 0)
                         .limit(1)
                         .getDocuments();
                     List <DocumentSnapshot> documents = result.documents;
                     if (documents.length == 1) {
-                      loginUser(_phnum, context);
-                      print('login user complete. $_phnum');
+                      documents.forEach((element) {
+                        status = element.data['status'];
+                        if(status == 0){
+                          loginUser(_phnum, context);
+                          print('login user complete. $_phnum');
+                        }
+                        else{
+                          showDialog(context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: status == 1 ? Text(
+                                      "The number is deactivated.") : Text(
+                                      "The number is deleted."),
+                                  actions: <Widget>[
+                                    FlatButton(
+                                        child: Text('Cancel'),
+                                        onPressed: () {
+                                          Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (context) => Login()));
+                                        }),
+                                    FlatButton(
+                                        child: Text('Register'),
+                                        color: Colors.amber[400],
+                                        onPressed: () {
+                                          Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (context) => Register()));
+                                        })
+                                  ],
+                                );
+                              });
+                        }
+                      });
                     }
                     else {
                       print('user not found.');

@@ -85,7 +85,6 @@ class _HomeState extends State<CreateTask> {
                             draft.updatedBy = doc.data['updated_by'];
                             draft.updatedAt = doc.data['updated_at']?.toDate();
                             draft.author = doc.data['author'];
-                            draft.serviceProvider = doc.data['service_provider'];
                             draft.category = doc.data['category'];
                             draft.title = doc.data['title'];
                             draft.description = doc.data['description'];
@@ -541,7 +540,7 @@ class _HomeState extends State<CreateTask> {
                             'updated_by': task.updatedBy,
                             'updated_at': task.updatedAt,
                             'author': {'name':user.displayName, 'profile_pic': user.photoUrl},
-                            'service_provider': task.serviceProvider,
+                            // 'service_provider': task.serviceProvider,
                             'category': task.category,
                             'title': _titleInputController.text,
                             'description': _descriptionInputController.text,
@@ -609,7 +608,7 @@ class _HomeState extends State<CreateTask> {
                               'updated_by': task.updatedBy,
                               'updated_at': task.updatedAt,
                               'author': {'name':profile.data['name'], 'profile_pic': profile.data['profile_pic']},
-                              'service_provider': task.serviceProvider,
+                              // 'service_provider': task.serviceProvider,
                               'category': task.category,
                               'title': _titleInputController.text,
                               'description': _descriptionInputController.text,
