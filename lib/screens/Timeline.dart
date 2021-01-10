@@ -1,6 +1,8 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:testapp/services/analytics_service.dart';
 import 'Inbox.dart';
 import 'MySingleTaskView.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -27,6 +29,7 @@ class _HomeState extends State<Timeline> {
   String searchTerm = '';
 
   RefreshController _refreshController = RefreshController(initialRefresh: false);
+  final _analyticsService = AnalyticsServices();
 
   void _onRefresh() async{
     // monitor network fetch
@@ -47,6 +50,7 @@ class _HomeState extends State<Timeline> {
   }
 
   Widget build(BuildContext context) {
+    FirebaseAnalytics().setCurrentScreen(screenName: "TimelineScreen");
 
     return Scaffold(
       appBar: AppBar(
@@ -55,7 +59,7 @@ class _HomeState extends State<Timeline> {
         leading: IconButton(icon : Icon(Icons.inbox), onPressed: (){
           Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => Inbox(user : user)));
+              MaterialPageRoute(builder: (context) => Inbox(user : user), settings: RouteSettings(name: "InboxView")));
         },),
         elevation: 0.0,
         backgroundColor: Colors.amberAccent[400],
@@ -83,6 +87,7 @@ class _HomeState extends State<Timeline> {
                         },
                     ),
                   );
+                  _analyticsService.logSearch();
                 }
                 else {
                   setState(() {
@@ -248,7 +253,7 @@ class _HomeState extends State<Timeline> {
                                         onTap: () async {
                                           await Navigator.push(
                                               context,
-                                              MaterialPageRoute(builder: (context) => MySingleTaskView(user: user, task: taskList[index],))
+                                              MaterialPageRoute(builder: (context) => MySingleTaskView(user: user, task: taskList[index],), settings: RouteSettings(name: "TaskDetailView"))
                                           );
                                           setState(() {});
                                         },
@@ -308,6 +313,7 @@ class _HomeState extends State<Timeline> {
                                                             'user_id': user.uid,
                                                             'task_id': taskList[index].id,
                                                           });
+                                                          _analyticsService.logBookmarkAdded();
                                                         },
                                                       );
                                                     },

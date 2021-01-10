@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -17,6 +18,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as Path;
+import 'package:testapp/services/analytics_service.dart';
 
 import 'ViewProfile.dart';
 
@@ -39,6 +41,7 @@ class _HomeState extends State<ChatWindow> {
   File imageFile;
   String imageUrl;
   bool isLoading;
+  final _analyticsService = AnalyticsServices();
 
   @override
   void initState(){
@@ -61,6 +64,7 @@ class _HomeState extends State<ChatWindow> {
 
   @override
   Widget build(BuildContext context) {
+    FirebaseAnalytics().setCurrentScreen(screenName: "ChatWindowScreen");
     return Scaffold(
         appBar: AppBar(
           centerTitle: true,
@@ -69,7 +73,7 @@ class _HomeState extends State<ChatWindow> {
             IconButton (
               icon: Icon(Icons.arrow_forward_ios),
               onPressed: (){
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ViewProfile(user : user, profile : profile)));
+                Navigator.push(context, MaterialPageRoute(builder: (context) => ViewProfile(user : user, profile : profile), settings: RouteSettings(name: "ProfileView")));
               },
             )
           ],
@@ -250,7 +254,7 @@ class _HomeState extends State<ChatWindow> {
                     context,
                     MaterialPageRoute(
                         builder: (context) => FullPhoto(
-                            url: msg.content)));
+                            url: msg.content), settings: RouteSettings(name: "FullPhotoView")));
               },
               padding: EdgeInsets.all(0),
             ),
@@ -287,7 +291,7 @@ class _HomeState extends State<ChatWindow> {
                     loadFile(msg.content).then((path) {
                       Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => viewFile(path)));
+                          MaterialPageRoute(builder: (context) => viewFile(path), settings: RouteSettings(name: "FileView")));
                     });
                   },
                 ),
@@ -307,7 +311,7 @@ class _HomeState extends State<ChatWindow> {
                     ? Material(
                   child: InkWell(
                     onTap: (){
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => ViewProfile(user : user, profile : profile)));
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => ViewProfile(user : user, profile : profile), settings: RouteSettings(name: "ProfileView")));
                     },
                     child: CachedNetworkImage(
                       placeholder: (context, url) => Container(
@@ -392,7 +396,7 @@ class _HomeState extends State<ChatWindow> {
                           context,
                           MaterialPageRoute(
                               builder: (context) => FullPhoto(
-                                  url: msg.content)));
+                                  url: msg.content), settings: RouteSettings(name: "FullPhotoView")));
                     },
                     padding: EdgeInsets.all(0),
                   ),
@@ -419,7 +423,7 @@ class _HomeState extends State<ChatWindow> {
                         loadFile(msg.content).then((path) {
                           Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => viewFile(path)));
+                              MaterialPageRoute(builder: (context) => viewFile(path), settings: RouteSettings(name: "FileView")));
                         });
                       },
                     ),
@@ -462,6 +466,7 @@ class _HomeState extends State<ChatWindow> {
         isLoading = false;
         onSendMessage(imageUrl, 1);
       });
+      _analyticsService.logMsgSent();
     }, onError: (err) {
       setState(() {
         isLoading = false;
@@ -492,6 +497,7 @@ class _HomeState extends State<ChatWindow> {
         isLoading = false;
         onSendMessage(pdfUrl, 2);
       });
+      _analyticsService.logMsgSent();
     }, onError: (err) {
       setState(() {
         isLoading = false;
@@ -618,6 +624,7 @@ class _HomeState extends State<ChatWindow> {
 
       listScrollController.animateTo(0.0,
           duration: Duration(milliseconds: 300), curve: Curves.easeOut);
+      _analyticsService.logMsgSent();
     } else {
       Fluttertoast.showToast(
           msg: 'Nothing to send',

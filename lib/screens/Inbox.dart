@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -23,6 +24,7 @@ class _HomeState extends State<Inbox> {
 
   @override
   Widget build(BuildContext context) {
+    FirebaseAnalytics().setCurrentScreen(screenName: "InboxScreen");
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -159,7 +161,7 @@ class _HomeState extends State<Inbox> {
     }).then((val){
       Navigator.push(context, MaterialPageRoute(
           builder: (context) =>
-              ChatWindow(user: user, profile: profile)));
+              ChatWindow(user: user, profile: profile), settings: RouteSettings(name: "ChatWindowView")));
     });
   }
 
@@ -208,7 +210,7 @@ class _HomeState extends State<Inbox> {
         onTap: (){
           Navigator.push(context, MaterialPageRoute(
               builder: (context) =>
-                  ViewNotification(user: user, notificationItem: notiItem)));
+                  ViewNotification(user: user, notificationItem: notiItem), settings: RouteSettings(name: "NotificationView")));
         },
         leading : Icon(Icons.notifications),
         title: Text(notiItem.title),

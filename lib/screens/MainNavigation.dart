@@ -1,5 +1,7 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:testapp/services/analytics_service.dart';
 import 'Timeline.dart';
 import 'MyTask.dart';
 import 'CreateTask.dart';
@@ -10,6 +12,7 @@ import 'dart:io';
 
 void main() => runApp(MaterialApp(
   home : MainNavigation(),
+  navigatorObservers: [AnalyticsServices().getAnalyticsObserver()],
 )
 )
 ;
@@ -29,6 +32,7 @@ class _HomeState extends State<MainNavigation> {
   _HomeState(this.user);
   @override
   Widget build(BuildContext context) {
+    FirebaseAnalytics().setCurrentScreen(screenName: "MainScreen");
     final tabs = [
       Timeline(user: user,),
       MyTask(user: user,),
@@ -62,7 +66,7 @@ class _HomeState extends State<MainNavigation> {
               Task newTask = new Task();
               await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => CreateTask(user: user, task: newTask,))
+                  MaterialPageRoute(builder: (context) => CreateTask(user: user, task: newTask,), settings: RouteSettings(name: "TaskFormView"))
               );
               setState(() {});
             },

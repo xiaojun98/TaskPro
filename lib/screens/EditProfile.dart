@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -7,6 +8,7 @@ import 'package:path/path.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:testapp/models/Profile.dart';
+import 'package:testapp/services/analytics_service.dart';
 import 'package:testapp/services/loadingDialog.dart';
 
 class EditProfile extends StatefulWidget {
@@ -42,6 +44,7 @@ class _HomeState extends State<EditProfile> {
 
   final GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
   final _keyLoader = GlobalKey<State>();
+  final _analyticsService = AnalyticsServices();
 
 
   Future getImage() async {
@@ -108,6 +111,7 @@ class _HomeState extends State<EditProfile> {
   }
 
   Widget build(BuildContext context) {
+    FirebaseAnalytics().setCurrentScreen(screenName: "ProfileFormScreen");
 
     if(profile!=null) {
       getValue();
@@ -331,6 +335,7 @@ class _HomeState extends State<EditProfile> {
                                 LoadingDialog.showLoadingDialog(context, _keyLoader, "Updating...");
                                 _formKey.currentState.save();
                                 _updateProfile(context,_name, _email, _about, _achievement, _services).then((value) {
+                                  _analyticsService.logProfileEdited();
                                   Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                                   Navigator.pop(context);
                                 });

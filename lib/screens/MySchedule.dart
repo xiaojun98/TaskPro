@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -37,6 +38,7 @@ class _HomeState extends State<MySchedule> {
 
   @override
   Widget build(BuildContext context) {
+    FirebaseAnalytics().setCurrentScreen(screenName: "ScheduleScreen");
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -243,7 +245,7 @@ class _MyListViewState extends State<MyListView> {
               onTap: ()async {
                 await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => MySingleTaskView(user: user, task: taskList[index],))
+                    MaterialPageRoute(builder: (context) => MySingleTaskView(user: user, task: taskList[index],), settings: RouteSettings(name: "TaskDetailView"))
                 );
                 setState(() {});
               },

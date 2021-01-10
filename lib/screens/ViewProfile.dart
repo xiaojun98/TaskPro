@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/services.dart';
 import 'package:testapp/models/Profile.dart';
+import 'package:testapp/services/analytics_service.dart';
 import 'ChatWindow.dart';
 import 'CreateReport.dart';
 
@@ -24,6 +26,7 @@ class _HomeState extends State<ViewProfile> {
   Profile profile;
   _HomeState(this.user,this.profile);
   bool ownProfile = false;
+  final _analyticsService = AnalyticsServices();
 
   Future<bool> createChatWindow() async{
     String groupChatId;
@@ -50,13 +53,15 @@ class _HomeState extends State<ViewProfile> {
       }).then((value) {
         Navigator.push(context, MaterialPageRoute(
             builder: (context) =>
-                ChatWindow(user: user, profile: profile)));
+                ChatWindow(user: user, profile: profile), settings: RouteSettings(name: "ChatWindowView")));
       });
     });
   }
 
   Widget build(BuildContext context) {
+    FirebaseAnalytics().setCurrentScreen(screenName: "ProfileScreen");
     ownProfile = user.uid == profile.id;
+    _analyticsService.logProfileViewed();
     return Scaffold(
       appBar: AppBar(title : Text('Profile'),
         centerTitle: true ,
@@ -75,7 +80,7 @@ class _HomeState extends State<ViewProfile> {
                     child: Text('Yes'),
                     onPressed: () {
                       Navigator.pop(c,true);
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => CreateReport(user: user, category: 'Report an User', taskId: null, profileId: profile.id,)));
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => CreateReport(user: user, category: 'Report an User', taskId: null, profileId: profile.id,), settings: RouteSettings(name: "ReportFormView")));
                     }
                   ),
                   FlatButton(
@@ -100,7 +105,7 @@ class _HomeState extends State<ViewProfile> {
                   }).then((value){
                     Navigator.push(context, MaterialPageRoute(
                         builder: (context) =>
-                        ChatWindow(user: user, profile: profile)));
+                        ChatWindow(user: user, profile: profile), settings: RouteSettings(name: "ChatWindowView")));
                   });
                 }),
             );

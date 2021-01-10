@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:testapp/screens/MainNavigation.dart';
 import 'package:testapp/screens/Register.dart';
+import 'package:testapp/services/analytics_service.dart';
 
 
 
@@ -18,6 +20,7 @@ class _HomeState extends State<Login> {
   String _code = '';
   final db = Firestore.instance;
   final _formKey = GlobalKey<FormState>();
+  final _analyticsService = AnalyticsServices();
 
   Future <bool> loginUser(String phnum, BuildContext context) async {
     FirebaseAuth _auth = FirebaseAuth.instance;
@@ -75,8 +78,10 @@ class _HomeState extends State<Login> {
                         user = result.user;
 
                         if (user != null) {
+                          _analyticsService.logLogin();
                           Navigator.push(context, MaterialPageRoute(
-                              builder: (context) => MainNavigation(user: user)
+                              builder: (context) => MainNavigation(user: user),
+                              settings: RouteSettings(name: "MainView")
                           ));
                         }
                         else {
@@ -94,6 +99,7 @@ class _HomeState extends State<Login> {
 
   @override
   Widget build(BuildContext context) {
+    FirebaseAnalytics().setCurrentScreen(screenName: "LoginScreen");
     return Scaffold(
       appBar: AppBar(title: Text('TaskPro'),
         centerTitle: true,
@@ -178,7 +184,8 @@ class _HomeState extends State<Login> {
                                           Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                  builder: (context) => Login()));
+                                                  builder: (context) => Login(),
+                                                  settings: RouteSettings(name: "LoginView")));
                                         }),
                                     FlatButton(
                                         child: Text('Register'),
@@ -187,7 +194,8 @@ class _HomeState extends State<Login> {
                                           Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                  builder: (context) => Register()));
+                                                  builder: (context) => Register(),
+                                                  settings: RouteSettings(name: "RegisterView")));
                                         })
                                   ],
                                 );
@@ -209,7 +217,8 @@ class _HomeState extends State<Login> {
                                       Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                              builder: (context) => Login()));
+                                              builder: (context) => Login(),
+                                              settings: RouteSettings(name: "LoginView")));
                                     }),
                                 FlatButton(
                                     child: Text('Register'),
@@ -218,7 +227,8 @@ class _HomeState extends State<Login> {
                                       Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                              builder: (context) => Register()));
+                                              builder: (context) => Register(),
+                                              settings: RouteSettings(name: "RegisterView")));
                                     })
                               ],
                             );

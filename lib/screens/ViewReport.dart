@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -23,6 +24,7 @@ class _HomeState extends State<ViewReport> {
 
   @override
   Widget build(BuildContext context) {
+    FirebaseAnalytics().setCurrentScreen(screenName: "ReportScreen");
     return Scaffold(
       appBar : AppBar(
         centerTitle: true,
@@ -112,7 +114,7 @@ class _HomeState extends State<ViewReport> {
                              task.offerNum = doc.data['offer_num'];
                              task.rating = doc.data['rating'];
                              await FirebaseAuth.instance.currentUser().then((user) => {
-                               Navigator.push(context, MaterialPageRoute(builder: (context) => MySingleTaskView(user: user, task: task,)))
+                               Navigator.push(context, MaterialPageRoute(builder: (context) => MySingleTaskView(user: user, task: task,), settings: RouteSettings(name: "TaskDetailView")))
                              });
                            });
                          },
@@ -137,7 +139,7 @@ class _HomeState extends State<ViewReport> {
                              profile.rating = doc.data["rating"].toString();
                              profile.gallery = doc.data["gallery"];
                              await FirebaseAuth.instance.currentUser().then((user) => {
-                               Navigator.push(context, MaterialPageRoute(builder: (context) => ViewProfile(user: user, profile : profile)))
+                               Navigator.push(context, MaterialPageRoute(builder: (context) => ViewProfile(user: user, profile : profile), settings: RouteSettings(name: "ProfileView")))
                              });
                            });
 

@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'Login.dart';
 import 'Register.dart';
@@ -10,6 +11,7 @@ class StartUp extends StatefulWidget{
 class _HomeState extends State<StartUp> {
   @override
   Widget build(BuildContext context) {
+    FirebaseAnalytics().setCurrentScreen(screenName: "StartUpScreen");
     return Scaffold(
 //      appBar: AppBar(title : Text('TaskPro'),
 //        centerTitle: true ,
@@ -33,7 +35,7 @@ class _HomeState extends State<StartUp> {
             onPressed: (){
               Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => Login()));
+                  MaterialPageRoute(builder: (context) => Login(), settings: RouteSettings(name: "LoginView")));
             },
             child: Text ('Login',style: TextStyle(fontSize: 18,color: Colors.amberAccent[400],fontFamily: 'OpenSansR')),
             shape: new RoundedRectangleBorder(borderRadius: new BorderRadius.circular(30.0)),
@@ -42,7 +44,7 @@ class _HomeState extends State<StartUp> {
             onPressed: (){
               Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => Register()));
+                  MaterialPageRoute(builder: (context) => Register(), settings: RouteSettings(name: "RegisterView")));
             },
             child: Text ('Register', style: TextStyle(fontSize: 18,color: Colors.amberAccent[400],fontFamily: 'OpenSansR')),
             shape: new RoundedRectangleBorder(borderRadius: new BorderRadius.circular(30.0)),

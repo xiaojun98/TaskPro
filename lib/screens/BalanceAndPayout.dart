@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:testapp/models/transaction.dart';
 import 'package:testapp/screens/Setup%20Stripe.dart';
+import 'package:testapp/services/analytics_service.dart';
 import 'package:testapp/services/loadingDialog.dart';
 
 class BalanceAndPayout extends StatefulWidget {
@@ -25,9 +27,11 @@ class _HomeState extends State<BalanceAndPayout> {
   List<Payout> historyList = [];
   double balance = 0.00;
   TextStyle _style1 = TextStyle(fontFamily: 'OpenSans-R',fontWeight:FontWeight.bold,fontSize: 18);
+  final _analyticsService = AnalyticsServices();
 
   @override
   Widget build(BuildContext context) {
+    FirebaseAnalytics().setCurrentScreen(screenName: "BalanceAndPaymentScreen");
     return Scaffold(
       appBar : AppBar(
         centerTitle: true,
@@ -104,7 +108,7 @@ class _HomeState extends State<BalanceAndPayout> {
                           color: Colors.blueGrey,
                           onPressed: (){
                             Navigator.pop(context);
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => SetupStripe(user : user)));
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => SetupStripe(user : user), settings: RouteSettings(name: "SetupStripeView")));
                           },
                         ),
                       ],
@@ -158,6 +162,7 @@ class _HomeState extends State<BalanceAndPayout> {
               onPressed: (){
                 LoadingDialog.showLoadingDialog(context, _keyLoader, "Payout to Stripe..");
                 withdraw();
+                _analyticsService.logPayout();
               }
           ),
           SizedBox(height: 30,),

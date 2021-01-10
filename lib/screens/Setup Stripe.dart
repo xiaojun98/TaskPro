@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:testapp/services/analytics_service.dart';
 import 'package:testapp/services/appWebView.dart';
 import 'package:testapp/services/loadingDialog.dart';
 
@@ -26,9 +28,11 @@ class _HomeState extends State<SetupStripe> {
   bool requestedStripe;
   bool linkedStripeOnboard;
   String stripeAccId;
+  final _analyticsService = AnalyticsServices();
 
   @override
   Widget build(BuildContext context) {
+    FirebaseAnalytics().setCurrentScreen(screenName: "SetupStripeScreen");
     return Scaffold(
         appBar : AppBar(
           centerTitle: true,
@@ -134,6 +138,7 @@ class _HomeState extends State<SetupStripe> {
                         fontSize: 16.0
                     );
                   });
+                  _analyticsService.logStripeCreated();
                 }).catchError((e){
                   showDialog(
                       context: context,
@@ -195,12 +200,13 @@ class _HomeState extends State<SetupStripe> {
                 },).then((res) async {
 
                   Navigator.push(context, MaterialPageRoute(
-                      builder: (context) => appWebView( link: res.data['url'])));
+                      builder: (context) => appWebView( link: res.data['url']), settings: RouteSettings(name: "AppWebView")));
                   var checkLink = CloudFunctions.instance.getHttpsCallable(functionName: 'checkLink');
                   checkLink.call(<String, dynamic>{
                     'stripe_acc_id': stripeAccId,
                     'userId' : user.uid,
                   });
+                  _analyticsService.logStripeLinked();
                 }).catchError((e){
                   print(e.toString());
                 });
@@ -244,7 +250,7 @@ class _HomeState extends State<SetupStripe> {
                 ),
                 onTap: () async {
                   Navigator.push(context, MaterialPageRoute(
-                      builder: (context) => appWebView( link: 'https://dashboard.stripe.com/test/')));
+                      builder: (context) => appWebView( link: 'https://dashboard.stripe.com/test/'), settings: RouteSettings(name: "AppWebView")));
                   // var callable = CloudFunctions.instance.getHttpsCallable(functionName: 'createOnboardLink');
                   // // HttpsCallableResult res = await
                   // callable.call(<String, dynamic>{
