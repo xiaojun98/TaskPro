@@ -8,7 +8,6 @@ class Task {
   DocumentReference updatedBy;
   DateTime updatedAt;
   Object author;
-  // Object serviceProvider;
   String category;
   String title;
   String description;
@@ -24,7 +23,10 @@ class Task {
   bool isCompleteByAuthor = false;
   bool isCompleteByProvider = false;
   int offerNum;
-  double rating;
+
+  DocumentReference reviewedByAuthor ;
+  DocumentReference reviewByProvider ;
+
   DateTime upcomingDeadline;
   String creditId;
   String debitId;

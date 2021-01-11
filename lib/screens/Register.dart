@@ -1,8 +1,6 @@
-import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:testapp/services/analytics_service.dart';
 import 'Login.dart';
 import 'StartUp.dart';
 import 'MainNavigation.dart';
@@ -31,8 +29,6 @@ class _HomeState extends State<Register> {
   final _emailController = TextEditingController();
   final _idnumController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  UserUpdateInfo userUpdateInfo = new UserUpdateInfo();
-  final _analyticsService = AnalyticsServices();
 
   Future <bool> registerUser(String name, String phnum, String email, String idnum, BuildContext context) async {
     FirebaseAuth _auth = FirebaseAuth.instance;
@@ -43,7 +39,7 @@ class _HomeState extends State<Register> {
         //verificationCompleted only occure if auto-retrieval
         verificationCompleted: null,
         verificationFailed: (AuthException exp) {
-          print(exp);
+          print('Error ' + exp.message);
         },
         codeSent: (String verfId, [int forceResend]) {
           showDialog(
@@ -57,6 +53,7 @@ class _HomeState extends State<Register> {
                     children: <Widget>[
                       TextField(
                         controller: _codeController,
+                        textAlign: TextAlign.center,
                         keyboardType: TextInputType.number,
                         onChanged: (val) {
                           setState(() => _code = val);
@@ -89,14 +86,22 @@ class _HomeState extends State<Register> {
                           LoadingDialog.showLoadingDialog(context, _keyLoader, "Validating...");
                           _uid = user.uid;
                           await createUser(_uid,user).catchError((e){
-                            print("$e,#in confirm button $_uid");
-                            Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
+                            print("$e, in confirm button $_uid");
+                            Navigator.of(context).pop();
+                            showDialog(
+                                context: context,
+                                barrierDismissible: true,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: Text('Error Register'),
+                                    content: Text('Error : $e. Please try again.'),
+                                  );
+                                });
+                            // Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                             }).then((value){
-                              _analyticsService.logSignUp();
                               Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                               Navigator.push(context, MaterialPageRoute(
-                                  builder: (context) => MainNavigation(user: user),
-                                  settings: RouteSettings(name: "MainView")
+                                  builder: (context) => MainNavigation(user: user)
                               ));
                           });
                         }
@@ -115,7 +120,6 @@ class _HomeState extends State<Register> {
 
   @override
   Widget build(BuildContext context) {
-    FirebaseAnalytics().setCurrentScreen(screenName: "RegisterScreen");
     return Scaffold(
       appBar: AppBar(title: Text('TaskPro'),
         centerTitle: true,
@@ -179,7 +183,7 @@ class _HomeState extends State<Register> {
                         //validate input in client side
                         validator: (val) =>
                         !(val.length > 11)
-                            ? 'Enter valid mobile number (eg : +60101234567)'
+                            ? 'Enter valid mobile number with country code. (eg : +60101234567)'
                             : null,
                         textAlign: TextAlign.center,
                         decoration: InputDecoration(
@@ -226,7 +230,7 @@ class _HomeState extends State<Register> {
                         controller: _idnumController,
                         textAlign: TextAlign.center,
                         validator: (val) =>
-                        !(val.length == 9 || val.length <= 12)
+                        !(val.length >= 9 && val.length <= 12)
                             ? 'Enter a valid IC/Passport number.'
                             : null,
                         decoration: InputDecoration(
@@ -271,7 +275,7 @@ class _HomeState extends State<Register> {
                                                   Navigator.push(
                                                       context,
                                                       MaterialPageRoute(
-                                                          builder: (context) => Register(), settings: RouteSettings(name: "RegisterView")));
+                                                          builder: (context) => Register()));
                                                 }),
                                             FlatButton(
                                                 child: Text('Login'),
@@ -281,7 +285,7 @@ class _HomeState extends State<Register> {
                                                       context,
                                                       MaterialPageRoute(
                                                           builder: (context) =>
-                                                              Login(), settings: RouteSettings(name: "LoginView")));
+                                                              Login()));
                                                 })
                                           ],
                                         );
@@ -304,7 +308,7 @@ class _HomeState extends State<Register> {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => StartUp(), settings: RouteSettings(name: "StartUpView")));
+                                      builder: (context) => StartUp()));
                             },
                             child: Text('Cancel',
                               style: TextStyle(fontSize: 18,
@@ -327,6 +331,7 @@ class _HomeState extends State<Register> {
   }
 
   Future<bool> createUser(String _uid, FirebaseUser user) async{
+    UserUpdateInfo userUpdateInfo = new UserUpdateInfo();
     userUpdateInfo.displayName = _name;
     userUpdateInfo.photoUrl = ' ';
     user.updateProfile(userUpdateInfo);
@@ -334,7 +339,7 @@ class _HomeState extends State<Register> {
     await db.collection("users").document(_uid).setData({
       'id' : _uid,
       'name': _name,
-      'ph_num': _phnum,
+      'ph_num': _phnum.replaceAll('-', ''),
       'email': _email,
       'idnum': _idnum,
       'joined' : new DateTime.now(),
@@ -358,6 +363,7 @@ class _HomeState extends State<Register> {
         'joined' : new DateTime.now(),
         'achievement' : '',
         'about' : '-',
+        'notificationEnabled' : false,
       });
     }).then((value) async {
       await db.collection("wallet").document(_uid).setData({

@@ -13,11 +13,6 @@ class _HomeState extends State<StartUp> {
   Widget build(BuildContext context) {
     FirebaseAnalytics().setCurrentScreen(screenName: "StartUpScreen");
     return Scaffold(
-//      appBar: AppBar(title : Text('TaskPro'),
-//        centerTitle: true ,
-//        elevation: 0.0,
-//        backgroundColor: Colors.amberAccent[400],
-//      ),
       body: Center(
         child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

@@ -1,11 +1,10 @@
-import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:moneytextformfield/moneytextformfield.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:testapp/services/analytics_service.dart';
+import 'package:testapp/screens/MyTask.dart';
 import '../models/Task.dart';
 import '../services/loadingDialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -33,11 +32,9 @@ class _HomeState extends State<CreateTask> {
   TextEditingController _tagsInputController = new TextEditingController();
   TextEditingController _locationInputController = new TextEditingController();
   TextEditingController _feeInputController = new TextEditingController();
-  final _analyticsService = AnalyticsServices();
 
   @override
   Widget build(BuildContext context) {
-    FirebaseAnalytics().setCurrentScreen(screenName: "TaskFormScreen");
     DateTime now = DateTime.now();
     if(task.offerDeadline == null || task.offerDeadline.isBefore(now)) {
       task.offerDeadline = now;
@@ -104,7 +101,6 @@ class _HomeState extends State<CreateTask> {
                             draft.isCompleteByAuthor = doc.data['is_complete_by_author'];
                             draft.isCompleteByProvider = doc.data['is_complete_by_provider'];
                             draft.offerNum = doc.data['offer_num'];
-                            draft.rating = doc.data['rating'];
                             draftItems.add(
                                 SimpleDialogOption(
                                   child: Text(doc.data['title']),
@@ -222,7 +218,7 @@ class _HomeState extends State<CreateTask> {
                                 color :Colors.grey,
                                 fontSize: 14
                             )),
-                        maxLength: 30,
+                        maxLength: 60,
                         controller: _titleInputController,
                         textCapitalization: TextCapitalization.words,
                         validator: (value) => value.isEmpty ? 'Please enter title for the task' : null,
@@ -532,7 +528,6 @@ class _HomeState extends State<CreateTask> {
                             'location': _locationInputController.text,
                             'fee': double.parse(_feeInputController.text),
                           }).then((value) {
-                            _analyticsService.logDraftSaved();
                             Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                             Navigator.pop(context);
                           });
@@ -561,9 +556,7 @@ class _HomeState extends State<CreateTask> {
                             'is_complete_by_author': task.isCompleteByAuthor,
                             'is_complete_by_provider': task.isCompleteByProvider,
                             'offer_num': 0,
-                            'rating': task.rating,
                           }).then((value) {
-                            _analyticsService.logTaskCreated();
                             Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                             Navigator.pop(context);
                           });
@@ -605,7 +598,9 @@ class _HomeState extends State<CreateTask> {
                             Navigator.pop(context, true);
                           });
                         } else {
+                          int task_posted;
                           await Firestore.instance.collection('profile').document(user.uid).get().then((profile) {
+                            task_posted = profile.data['task_posted'];
                             DocumentReference ref = Firestore.instance.collection('task').document();
                             ref.setData({
                               'id': ref.documentID,
@@ -630,10 +625,18 @@ class _HomeState extends State<CreateTask> {
                               'is_complete_by_author': task.isCompleteByAuthor,
                               'is_complete_by_provider': task.isCompleteByProvider,
                               'offer_num': 0,
-                              'rating': task.rating,
+                            }).then((value) {
+                              DocumentReference ref = Firestore.instance.collection('profile').document(user.uid);
+                              ref.updateData({
+                                'task_posted' : task_posted += 1,
+                              });
                             }).then((value) {
                               Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                               Navigator.pop(context, true);
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => MyTask(user: user))
+                              );
                             });
                           });
                         }
@@ -664,9 +667,12 @@ class _HomeState extends State<CreateTask> {
                           'location': _locationInputController.text,
                           'fee': double.parse(_feeInputController.text),
                         }).then((value) {
-                          _analyticsService.logTaskEdited();
                           Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                           Navigator.pop(context, true);
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => MyTask(user: user))
+                          );
                         });
                       } else {
                         setState(() => _autoValidate = true);

@@ -129,7 +129,7 @@ class StripeService {
   }
 
   static getPlatformExceptionErrorResult(err) {
-    String message = 'Something went wrong';
+    String message = err.message;
     if (err.code == 'cancelled') {
       message = 'Transaction cancelled';
     }

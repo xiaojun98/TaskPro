@@ -120,7 +120,6 @@ class _HomeState extends State<MySchedule> {
                     task.isCompleteByAuthor = doc.data['is_complete_by_author'];
                     task.isCompleteByProvider = doc.data['is_complete_by_provider'];
                     task.offerNum = doc.data['offer_num'];
-                    task.rating = doc.data['rating'];
                     if(task.taskDeadline.difference(DateTime.now()).inMilliseconds > 0){
                       if(task.status!= 'Completed' && task.status!= 'Expired' && task.status!= 'Cancelled'){
                         taskList.add(task);
@@ -141,7 +140,7 @@ class _HomeState extends State<MySchedule> {
                   builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
                     List<dynamic> taskIdList = new List();
                     if(!snapshot.hasData) {
-                      return Center(child: Text('No offered task found.', style: TextStyle(color: Colors.grey),),);
+                      return Center(child: Text('No task found.', style: TextStyle(color: Colors.grey),),);
                     } else {
                       taskIdList = snapshot.data.documents.map((DocumentSnapshot docSnapshot){
                         return docSnapshot.data['task_id'];
@@ -150,7 +149,7 @@ class _HomeState extends State<MySchedule> {
                         stream: Firestore.instance.collection('task').where('id', whereIn: taskIdList).snapshots(),
                         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
                           if(!snapshot.hasData) {
-                            return Center(child: Text('No offered found.', style: TextStyle(color: Colors.grey),),);
+                            return Center(child: Text('No task found.', style: TextStyle(color: Colors.grey),),);
                           }
                           for (DocumentSnapshot doc in snapshot.data.documents) {
                             Task task = new Task();
@@ -175,7 +174,6 @@ class _HomeState extends State<MySchedule> {
                             task.isCompleteByAuthor = doc.data['is_complete_by_author'];
                             task.isCompleteByProvider = doc.data['is_complete_by_provider'];
                             task.offerNum = doc.data['offer_num'];
-                            task.rating = doc.data['rating'];
                             if(task.offerDeadline.difference(DateTime.now()).inMilliseconds > 0 || task.taskDeadline.difference(DateTime.now()).inMilliseconds > 0){
                               //redundant
                               if(task.status!= 'Completed' && task.status!= 'Expired' && task.status!= 'Cancelled'){
@@ -227,8 +225,6 @@ class _MyListViewState extends State<MyListView> {
 
   @override
   Widget build(BuildContext context) {
-
-
 
     return ListView.builder(
       padding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),

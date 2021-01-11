@@ -6,5 +6,4 @@ class NotificationItem{
   String sentTo;
   String imgHeader;
   String content;
-
 }

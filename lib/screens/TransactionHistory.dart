@@ -60,7 +60,7 @@ class _HomeState extends State<TransactionHistory> {
                     .collection('wallet')
                     .document(user.uid)
                     .collection('debit')
-                    .where('category', whereIn: ['Debit','Payout'] )
+                    .where('category', whereIn: ['Debit','Payout','Refund'] )
                     .snapshots(),
                   builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
                     if(!snapshot.hasData) {

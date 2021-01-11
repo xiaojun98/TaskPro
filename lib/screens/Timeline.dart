@@ -10,6 +10,8 @@ import '../models/Task.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 
+import 'SearchProfile.dart';
+
 
 class Timeline extends StatefulWidget {
   FirebaseUser user;
@@ -105,6 +107,30 @@ class _HomeState extends State<Timeline> {
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
+            searching ?
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                InkWell(
+                  focusColor: Colors.white,
+                  onTap: (){
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => SearchProfile(user: user, searchTerm: searchTerm,))
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical : 20.0),
+                    child: Text("Search Profile..." , style: TextStyle(fontSize: 14, color: Colors.blueGrey,fontFamily: 'OpenSans')),
+                  ),
+                ),
+                Container(
+                  height: 1,
+                  color: Colors.blueGrey,
+                ),
+              ],
+            )
+            : Container(),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20,),
               child: Row(
@@ -160,7 +186,6 @@ class _HomeState extends State<Timeline> {
                     task.isCompleteByAuthor = doc.data['is_complete_by_author'];
                     task.isCompleteByProvider = doc.data['is_complete_by_provider'];
                     task.offerNum = doc.data['offer_num'];
-                    task.rating = doc.data['rating'];
                     if(task.status=='Ongoing'){
                       task.upcomingDeadline=task.taskDeadline;
                     }

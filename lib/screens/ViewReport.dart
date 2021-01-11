@@ -112,7 +112,6 @@ class _HomeState extends State<ViewReport> {
                              task.isCompleteByAuthor = doc.data['is_complete_by_author'];
                              task.isCompleteByProvider = doc.data['is_complete_by_provider'];
                              task.offerNum = doc.data['offer_num'];
-                             task.rating = doc.data['rating'];
                              await FirebaseAuth.instance.currentUser().then((user) => {
                                Navigator.push(context, MaterialPageRoute(builder: (context) => MySingleTaskView(user: user, task: task,), settings: RouteSettings(name: "TaskDetailView")))
                              });
@@ -133,10 +132,10 @@ class _HomeState extends State<ViewReport> {
                              profile.profilepic = doc.data["profile_pic"];
                              Timestamp j = doc.data["joined"];
                              profile.joined = j.toDate().toString().substring(0, 10);
-                             profile.posted = doc.data["task_posted"].toString();
-                             profile.completed = doc.data["task_completed"].toString();
-                             profile.reviewNum = doc.data["review_num"].toString();
-                             profile.rating = doc.data["rating"].toString();
+                             profile.posted = doc.data["task_posted"];
+                             profile.completed = doc.data["task_completed"];
+                             profile.reviewNum = doc.data["review_num"];
+                             profile.rating = double.parse(doc.data["rating"].toString());
                              profile.gallery = doc.data["gallery"];
                              await FirebaseAuth.instance.currentUser().then((user) => {
                                Navigator.push(context, MaterialPageRoute(builder: (context) => ViewProfile(user: user, profile : profile), settings: RouteSettings(name: "ProfileView")))

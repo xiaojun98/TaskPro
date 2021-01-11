@@ -153,10 +153,10 @@ class _HomeState extends State<Inbox> {
       profile.profilepic = doc.data["profile_pic"];
       Timestamp j = doc.data["joined"];
       profile.joined = j.toDate().toString().substring(0, 10);
-      profile.posted = doc.data["task_posted"].toString();
-      profile.completed = doc.data["task_completed"].toString();
-      profile.reviewNum = doc.data["review_num"].toString();
-      profile.rating = doc.data["rating"].toString();
+      profile.posted = doc.data["task_posted"];
+      profile.completed = doc.data["task_completed"];
+      profile.reviewNum = doc.data["review_num"];
+      profile.rating = double.parse(doc.data["rating"].toString());
       profile.gallery = doc.data["gallery"];
     }).then((val){
       Navigator.push(context, MaterialPageRoute(
@@ -185,17 +185,19 @@ class _HomeState extends State<Inbox> {
               NotificationItem notification = new NotificationItem();
               notification.title = doc.data['title'];
               notification.id = doc.data['id'];
-              notification.sentAt = doc.data['sentAt']?.toDate();;
+              notification.sentAt = doc.data['sentAt']?.toDate();
               notification.sentTo = doc.data['sentTo'] == user.displayName ? 'Me' : 'All';
-              notification.imgHeader = doc.data['imageHeader'];
+              notification.imgHeader = doc.data['imageHeader'] == "" || doc.data['imageHeader'] == null ? "" : doc.data['imageHeader'] ;
               notification.content = doc.data['content'];
-              notiList.add(notification);
+              if(notification.sentAt.difference(DateTime.now()).inMilliseconds < 0){
+                notiList.add(notification);
+              }
             }
             return ListView.builder(
               shrinkWrap: true,
               padding: EdgeInsets.all(10.0),
               itemBuilder: (context, index) => buildNotiItem(notiList[index]),
-              itemCount: snapshot.data.documents.length,
+              itemCount: notiList.length,
             );
           }
         },

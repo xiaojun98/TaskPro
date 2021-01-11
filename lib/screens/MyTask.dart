@@ -75,7 +75,6 @@ class _HomeState extends State<MyTask> {
                     task.isCompleteByAuthor = doc.data['is_complete_by_author'];
                     task.isCompleteByProvider = doc.data['is_complete_by_provider'];
                     task.offerNum = doc.data['offer_num'];
-                    task.rating = doc.data['rating'];
                     taskList.add(task);
                   }
                   return TaskListView(user: user, tab: 'Published', taskList: taskList,);
@@ -125,7 +124,6 @@ class _HomeState extends State<MyTask> {
                         task.isCompleteByAuthor = doc.data['is_complete_by_author'];
                         task.isCompleteByProvider = doc.data['is_complete_by_provider'];
                         task.offerNum = doc.data['offer_num'];
-                        task.rating = doc.data['rating'];
                         if(task.status!= 'Completed' && task.status!= 'Expired' && task.status!= 'Cancelled'){
                           taskList.add(task);
                         }
@@ -177,7 +175,6 @@ class _HomeState extends State<MyTask> {
                         task.isCompleteByAuthor = doc.data['is_complete_by_author'];
                         task.isCompleteByProvider = doc.data['is_complete_by_provider'];
                         task.offerNum = doc.data['offer_num'];
-                        task.rating = doc.data['rating'];
                         if(task.status == 'Open'){
                           taskList.add(task);
                         }
@@ -222,10 +219,61 @@ class _HomeState extends State<MyTask> {
                     task.isCompleteByAuthor = doc.data['is_complete_by_author'];
                     task.isCompleteByProvider = doc.data['is_complete_by_provider'];
                     task.offerNum = doc.data['offer_num'];
-                    task.rating = doc.data['rating'];
                     taskList.add(task);
                   }
-                  return TaskListView(user: user, tab: 'History', taskList: taskList,);
+                  // return TaskListView(user: user, tab: 'History', taskList: taskList,);
+                  return StreamBuilder<QuerySnapshot>(
+                    stream: Firestore.instance.collection('offer')
+                        .where('user_id', isEqualTo: user.uid).snapshots(),
+                    builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                      List<dynamic> taskIdList = new List();
+                      if(!snapshot.hasData) {
+                        return Center(child: Text('No history found.', style: TextStyle(color: Colors.grey),),);
+                      } else {
+                        taskIdList = snapshot.data.documents.map((DocumentSnapshot docSnapshot){
+                          return docSnapshot.data['task_id'];
+                        }).toList();
+                        return StreamBuilder<QuerySnapshot>(
+                          stream: Firestore.instance.collection('task').
+                          where('id', whereIn: taskIdList).snapshots(),
+                          builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                            if(!snapshot.hasData) {
+                              return Center(child: Text('No history'
+                                  ' found.', style: TextStyle(color: Colors.grey),),);
+                            }
+                            for (DocumentSnapshot doc in snapshot.data.documents) {
+                              Task task = new Task();
+                              task.id = doc.data['id'];
+                              task.createdBy = doc.data['created_by'];
+                              task.createdAt = doc.data['created_at']?.toDate();
+                              task.updatedBy = doc.data['updated_by'];
+                              task.updatedAt = doc.data['updated_at']?.toDate();
+                              task.author = doc.data['author'];
+                              task.category = doc.data['category'];
+                              task.title = doc.data['title'];
+                              task.description = doc.data['description'];
+                              task.additionalInstruction = doc.data['additional_instruction'];
+                              task.tags = doc.data['tags'];
+                              task.offerDeadline = doc.data['offer_deadline']?.toDate();
+                              task.taskDeadline = doc.data['task_deadline']?.toDate();
+                              task.location = doc.data['location'];
+                              task.fee = double.parse(doc.data['fee'].toString());
+                              task.payment = doc.data['payment'];
+                              task.status = doc.data['status'];
+                              task.offeredBy = doc.data['offered_by'];
+                              task.isCompleteByAuthor = doc.data['is_complete_by_author'];
+                              task.isCompleteByProvider = doc.data['is_complete_by_provider'];
+                              task.offerNum = doc.data['offer_num'];
+                              if(task.status== 'Completed' || task.status== 'Expired' || task.status== 'Cancelled'){
+                                taskList.add(task);
+                              }
+                            }
+                            return TaskListView(user: user, tab: 'History', taskList: taskList,);
+                          },
+                        );
+                      }
+                    },
+                  );
                 }
               },
             ),

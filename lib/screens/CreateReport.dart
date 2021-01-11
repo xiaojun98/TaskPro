@@ -1,10 +1,10 @@
-import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:testapp/models/Report.dart';
-import 'package:testapp/services/analytics_service.dart';
+import 'package:testapp/services/NotificationService.dart';
 import '../services/loadingDialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -32,19 +32,22 @@ class _HomeState extends State<CreateReport> {
   bool _validateCategory = false;
   bool _validateSubCategory = false;
 
+  TextEditingController _taskIdInputController = new TextEditingController();
+  TextEditingController _profileIdInputController = new TextEditingController();
   TextEditingController _titleInputController = new TextEditingController();
   TextEditingController _descriptionInputController = new TextEditingController();
   TextEditingController _suggestionInputController = new TextEditingController();
-  final _analyticsService = AnalyticsServices();
 
 
   void initState(){
     super.initState();
     if(taskId != null){
       category = 'Task Related Issues';
+      _taskIdInputController.text = taskId;
     }
     else if(profileId != null){
       category = 'Report an User';
+      _profileIdInputController.text = profileId;
     }
     else {
       category = null;
@@ -54,7 +57,7 @@ class _HomeState extends State<CreateReport> {
 
   @override
   Widget build(BuildContext context) {
-    FirebaseAnalytics().setCurrentScreen(screenName: "ReportFormScreen");
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -93,9 +96,9 @@ class _HomeState extends State<CreateReport> {
                               history.description = doc.data['description'];
                               history.suggestion = doc.data['suggestion'];
                               history.status = doc.data['status'];
-                              history.taskId = doc.data['taskId'];
+                              history.taskId = doc.data['taskId'] == null ? '' : doc.data['taskId'];
                               history.taskRef = doc.data['taskRef'];
-                              history.profileId = doc.data['profileId'];
+                              history.profileId = doc.data['profileId']== null ? '' : doc.data['profileId'];
                               history.profileRef = doc.data['profileRef'];
                               historyItems.add(
                                   SimpleDialogOption(
@@ -104,7 +107,7 @@ class _HomeState extends State<CreateReport> {
                                       Navigator.of(context).pop();
                                       Navigator.push(
                                           context,
-                                          MaterialPageRoute(builder: (context) => ViewReport(report: history,), settings: RouteSettings(name: "ReportView"))
+                                          MaterialPageRoute(builder: (context) => ViewReport(report: history,))
                                       );
                                     },
                                   )
@@ -151,7 +154,7 @@ class _HomeState extends State<CreateReport> {
               children: <Widget>[
                 Form(
                   key: _formKey,
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  autovalidateMode: AutovalidateMode.disabled,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -210,7 +213,7 @@ class _HomeState extends State<CreateReport> {
                                       );
                                     },
                                     validator: (value) {
-                                      if(value == null) {
+                                      if(category == null) {
                                         _validateCategory = true;
                                         return 'Please select a category';
                                       } else {
@@ -301,10 +304,10 @@ class _HomeState extends State<CreateReport> {
                                     },
                                     validator: (value) {
                                       if(subCategory == null) {
-                                        _validateCategory = true;
+                                        _validateSubCategory = true;
                                         return 'Please select a sub-category';
                                       } else {
-                                        _validateCategory = false;
+                                        _validateSubCategory = false;
                                         return null;
                                       }
                                     },
@@ -321,6 +324,7 @@ class _HomeState extends State<CreateReport> {
                         padding: const EdgeInsets.fromLTRB(0,5,0,5),
                         child: TextFormField(
                           textAlign: TextAlign.left,
+                          controller: _taskIdInputController,
                           decoration: InputDecoration(
                               border: OutlineInputBorder(),
                               hintText: "Task ID",
@@ -329,8 +333,8 @@ class _HomeState extends State<CreateReport> {
                                   fontSize: 14
                               )),
                           maxLength: 30,
-                          initialValue: taskId,
-                          validator: (value) => (value == null ) ? 'Please enter task ID' : null,
+                          // initialValue: taskId,
+                          validator: (value) => (value == null || value.isEmpty) ? 'Please enter task ID' : null,
                           onSaved: (val) => taskId = val,
                         ),
                       ) : Container(),
@@ -340,6 +344,7 @@ class _HomeState extends State<CreateReport> {
                         padding: const EdgeInsets.fromLTRB(0,5,0,5),
                         child: TextFormField(
                           textAlign: TextAlign.left,
+                          controller: _profileIdInputController,
                           decoration: InputDecoration(
                               border: OutlineInputBorder(),
                               hintText: "User Profile ID",
@@ -348,8 +353,8 @@ class _HomeState extends State<CreateReport> {
                                   fontSize: 14
                               )),
                           maxLength: 30,
-                          validator: (value) => (value == null )  ? 'Please enter ID of the user profile' : null,
-                          initialValue: profileId,
+                          validator: (value) => (value == null || value.isEmpty)  ? 'Please enter ID of the user profile' : null,
+                          // initialValue: profileId,
                           onSaved: (val) => profileId = val,
                         ),
                       ) : Container(),
@@ -365,7 +370,7 @@ class _HomeState extends State<CreateReport> {
                                   color :Colors.grey,
                                   fontSize: 14
                               )),
-                          maxLength: 30,
+                          maxLength: 60,
                           controller: _titleInputController,
                           textCapitalization: TextCapitalization.words,
                           validator: (value) => value.isEmpty ? 'Please enter title for the task' : null,
@@ -410,59 +415,77 @@ class _HomeState extends State<CreateReport> {
                           controller: _suggestionInputController,
                         ),
                       ),
+                      SizedBox(width: 20),
+                      FlatButton(
+                        onPressed: ()  {
+                          taskId = _taskIdInputController.text;
+                          profileId = _profileIdInputController.text;
+                          bool isValid = _formKey.currentState.validate();
+                          if (isValid) {
+                            print(taskId.toString() + ' : ' + profileId.toString() + ' : ' + profileId.isEmpty.toString() + profileId.isNotEmpty.toString());
+                            showDialog<bool>(
+                              context: context,
+                              builder: (c) => AlertDialog(
+                                title: Text('Alert'),
+                                content: Text('Submit report? Changes cannot be made after submission.'),
+                                actions: [
+                                  FlatButton(
+                                    child: Text('Yes'),
+                                    onPressed: () async => {
+                                      LoadingDialog.showLoadingDialog(context, _keyLoader, "Submitting"),
+                                      await Firestore.instance.collection('profile').document(user.uid).get().then((profile) {
+                                        DocumentReference ref = Firestore.instance.collection('report').document();
+                                        ref.setData({
+                                          'id': ref.documentID,
+                                          'createdBy': Firestore.instance.document('users/'+user.uid),
+                                          'createdAt': DateTime.now(),
+                                          'author': {'name':profile.data['name'], 'profile_pic': profile.data['profile_pic']},
+                                          'category': category,
+                                          'subCategory': subCategory,
+                                          'taskId' : (taskId!=null && taskId!='') ? taskId : null,
+                                          'taskRef' : (taskId!=null && taskId!='') ? Firestore.instance.document('task/'+ taskId) : null,
+                                          'profileId' : (profileId!=null && profileId!='') ? profileId : null,
+                                          'profileRef' : (profileId!=null && profileId!='') ? Firestore.instance.document('profile/'+ profileId) : null,
+                                          'title': _titleInputController.text,
+                                          'description': _descriptionInputController.text,
+                                          'suggestion' : _suggestionInputController.text,
+                                          'status': 'Pending',
+                                        }).then((value) {
+                                          Report report = new Report();
+                                          report.id = ref.documentID;
+                                          NotificationService.instance.generateNotification(1, report , user.uid);
+                                          Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
+                                          Navigator.pop(context, true);
+                                        }).then((value) {
+                                          Fluttertoast.showToast(
+                                              msg: "Report submitted",
+                                              toastLength: Toast.LENGTH_SHORT,
+                                              gravity: ToastGravity.BOTTOM,
+                                              timeInSecForIosWeb: 1,
+                                              backgroundColor: Colors.black54,
+                                              textColor: Colors.white,
+                                              fontSize: 16.0
+                                          );
+                                        });
+                                      })
+                                    },
+                                  ),
+                                  FlatButton(
+                                    child: Text('No'),
+                                    onPressed: () => Navigator.pop(c, false),
+                                  ),
+                                ],
+                              ),
+                            ).then((value) =>  Navigator.pop(context, true));
+                          }
+                        },
+                        child: Text ('Submit',
+                          style: TextStyle(fontSize: 16,color: Colors.black,fontFamily: 'OpenSansR'),),
+                        shape: new RoundedRectangleBorder(borderRadius: new BorderRadius.circular(30.0)),
+                        color: Colors.amber,
+                      ),
                     ],
                   ),
-                ),
-                SizedBox(width: 20),
-                FlatButton(
-                  onPressed: ()  {
-                    showDialog<bool>(
-                      context: context,
-                      builder: (c) => AlertDialog(
-                        title: Text('Alert'),
-                        content: Text('Submit report? Changes cannot be made after submission.'),
-                        actions: [
-                          FlatButton(
-                            child: Text('Yes'),
-                            onPressed: () async => {
-                            LoadingDialog.showLoadingDialog(context, _keyLoader, "Submitting"),
-                            await Firestore.instance.collection('profile').document(user.uid).get().then((profile) {
-                              DocumentReference ref = Firestore.instance.collection('report').document();
-                              ref.setData({
-                                'id': ref.documentID,
-                                'createdBy': Firestore.instance.document('users/'+user.uid),
-                                'createdAt': DateTime.now(),
-                                'author': {'name':profile.data['name'], 'profile_pic': profile.data['profile_pic']},
-                                'category': category,
-                                'subCategory': subCategory,
-                                'taskId' : (taskId!=null) ? taskId : '',
-                                'taskRef' : (taskId!=null) ? Firestore.instance.document('task/'+ taskId) : null,
-                                'profileId' : (profileId!=null) ? profileId : '',
-                                'profileRef' : (profileId!=null) ? Firestore.instance.document('profile/'+ profileId) : null,
-                                'title': _titleInputController.text,
-                                'description': _descriptionInputController.text,
-                                'suggestion' : _suggestionInputController.text,
-                                'status': 'Pending',
-                              }).then((value) {
-                                _analyticsService.logReportSubmitted();
-                                Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
-                                Navigator.pop(context, true);
-                              });
-                            })
-                            },
-                          ),
-                          FlatButton(
-                            child: Text('No'),
-                            onPressed: () => Navigator.pop(c, false),
-                          ),
-                        ],
-                      ),
-                    ).then((value) =>  Navigator.pop(context, true));
-                  },
-                  child: Text ('Submit',
-                    style: TextStyle(fontSize: 16,color: Colors.black,fontFamily: 'OpenSansR'),),
-                  shape: new RoundedRectangleBorder(borderRadius: new BorderRadius.circular(30.0)),
-                  color: Colors.amber,
                 ),
               ],
             ),

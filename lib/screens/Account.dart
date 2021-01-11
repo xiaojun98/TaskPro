@@ -1,22 +1,23 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_full_pdf_viewer/full_pdf_viewer_scaffold.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:testapp/models/Profile.dart';
 import 'package:testapp/screens/BalanceAndPayout.dart';
 import 'package:testapp/screens/TransactionHistory.dart';
+import 'package:testapp/services/NotificationService.dart';
 import 'CreateReport.dart';
 import 'EditProfile.dart';
 import 'Setup Stripe.dart';
-import 'SetupCard.dart';
 import 'StartUp.dart';
 import 'ViewProfile.dart';
+import 'package:testapp/models/Task.dart';
 
 class Account extends StatefulWidget {
   final FirebaseUser user;
@@ -33,9 +34,11 @@ class _HomeState extends State<Account> {
   TextStyle _style1 = TextStyle(fontFamily: 'OpenSans-R',fontWeight:FontWeight.bold,fontSize: 18);
   TextStyle _style2 = TextStyle(fontFamily: 'OpenSans-R',fontSize: 16);
 
+  final _codeController = TextEditingController();
+  String _code = '';
 
   Widget build(BuildContext context) {
-    FirebaseAnalytics().setCurrentScreen(screenName: "AccountScreen");
+
     return Scaffold(
       appBar: AppBar(title : Text('Account'),
         centerTitle: true ,
@@ -46,7 +49,7 @@ class _HomeState extends State<Account> {
             stream: Firestore.instance.collection('profile').document(user.uid).snapshots(),
             builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
               if(snapshot.hasData){
-                profile = new Profile(snapshot);
+                profile = new Profile.AsyncDs(snapshot);
                 profilePic = profile.profilepic;
                 return getProfile(context);
               }
@@ -83,7 +86,7 @@ class _HomeState extends State<Account> {
               ListTile(
                 onTap: (){
                   Navigator.push(context, MaterialPageRoute(
-                      builder: (context) => ViewProfile(user : user, profile : profile), settings: RouteSettings(name: "ProfileView")));
+                      builder: (context) => ViewProfile(user : user, profile : profile)));
                 },
                 leading: Icon(Icons.contacts),
                 title: Text("View Profile", style : _style2),
@@ -92,7 +95,7 @@ class _HomeState extends State<Account> {
               ListTile(
                 onTap: (){
                   Navigator.push(context, MaterialPageRoute(
-                      builder: (context) => EditProfile(user : user, profile : profile), settings: RouteSettings(name: "ProfileFormView")));
+                      builder: (context) => EditProfile(user : user, profile : profile)));
                 },
                 leading: Icon(Icons.settings),
                 title: Text("Edit Profile", style : _style2),
@@ -112,7 +115,7 @@ class _HomeState extends State<Account> {
             children: <Widget>[
               ListTile(
                 onTap: (){
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => BalanceAndPayout(user : user), settings: RouteSettings(name: "BalanceAndPayoutView")));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => BalanceAndPayout(user : user)));
                 },
                 leading: Icon(Icons.monetization_on),
                 title: Text("Balance and Payout", style : _style2),
@@ -120,7 +123,7 @@ class _HomeState extends State<Account> {
               ),
               ListTile(
                 onTap: (){
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => SetupStripe(user : user), settings: RouteSettings(name: "SetupStripeView")));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => SetupStripe(user : user)));
                 },
                 leading: Icon(Icons.account_balance_wallet),
                 title: Text("Set Up Stripe", style : _style2),
@@ -136,7 +139,7 @@ class _HomeState extends State<Account> {
               // ),
               ListTile(
                 onTap: (){
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => TransactionHistory(user : user), settings: RouteSettings(name: "TransactionHistoryView")));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => TransactionHistory(user : user)));
                 },
                 leading: Icon(Icons.history),
                 title: Text("Transaction History", style : _style2),
@@ -165,7 +168,7 @@ class _HomeState extends State<Account> {
             children: <Widget>[
               ListTile(
                 onTap: (){
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => CreateReport(user: user, category: null, taskId: null, profileId: null,), settings: RouteSettings(name: "ReportFormView")));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => CreateReport(user: user, category: null, taskId: null, profileId: null,)));
                 },
                 leading: Icon(Icons.report_problem),
                 title: Text("Report an issue", style : _style2),
@@ -176,7 +179,7 @@ class _HomeState extends State<Account> {
                   String pdf = await loadFile('https://firebasestorage.googleapis.com/v0/b/taskpro-47370.appspot.com/o/Terms%20and%20Condition%2FTerms%20and%20Condition%20draft%20(1).pdf?alt=media&token=80fdb31d-dc18-43ff-b1d9-f2a2c8eff064');
                   Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => viewPdf(pdf), settings: RouteSettings(name: "PDFView"))
+                      MaterialPageRoute(builder: (context) => viewPdf(pdf))
                       );
                 },
                 leading: Icon(Icons.verified_user),
@@ -193,10 +196,35 @@ class _HomeState extends State<Account> {
         SwitchListTile(
           activeColor: Colors.amberAccent[400],
           contentPadding: EdgeInsets.all(20),
-          value: true,
+          value: profile.notiEnaled,
           title: Text('Receive notification',style: TextStyle(color: Colors.grey[850])),
           onChanged: (val){
-
+            profile.notiEnaled = val;
+            Firestore.instance.collection("profile").document(user.uid).updateData({
+              'notificationEnabled' : val,
+            });
+            if(val){
+              Fluttertoast.showToast(
+                  msg: "Notification is Enabled",
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.BOTTOM,
+                  timeInSecForIosWeb: 1,
+                  backgroundColor: Colors.black54,
+                  textColor: Colors.white,
+                  fontSize: 16.0
+              );
+            }
+            else{
+              Fluttertoast.showToast(
+                  msg: "Notification is Disabled",
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.BOTTOM,
+                  timeInSecForIosWeb: 1,
+                  backgroundColor: Colors.black54,
+                  textColor: Colors.white,
+                  fontSize: 16.0
+              );
+            }
           },
         ),
         Padding(
@@ -208,40 +236,30 @@ class _HomeState extends State<Account> {
           margin: EdgeInsets.all(20),
           child: Column(
             children: <Widget>[
-              // ListTile(
-              //   onTap: (){
-              //
-              //   },
-              //   leading: Icon(Icons.phone_android),
-              //   title: Text("Change Phone Number", style : _style2),
-              //   trailing:Icon(Icons.arrow_forward),
-              // ),
               ListTile(
                 onTap: (){
-                  AlertDialog(
-                    title: Text(
-                        "Delete account? You can't register with the same number for 30 days."),
-                    actions: <Widget>[
-                      FlatButton(
-                          child: Text('Cancel'),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          }),
-                      FlatButton(
-                          child: Text('Delete'),
-                          color: Colors.redAccent,
-                          onPressed: () async{
-                            Firestore.instance.collection('user').document(user.uid).updateData({
-                              'status' : 2,
-                              'deleted_at' : DateTime.now(),
-                            }).then((value) {
-                              FirebaseAuth.instance.signOut().then((val){
-                                Navigator.of(context).pop();
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => StartUp(), settings: RouteSettings(name: "StartUpView")));
-                              });
-                            });
-                          })
-                    ],
+                  showDialog<bool>(
+                    context: context,
+                    useRootNavigator: false,
+                    builder: (c) =>
+                        AlertDialog(
+                          title: Text('Alert'),
+                          content: Text(
+                              'Delete account? Action cannot be undone'),
+                          actions: [
+                            FlatButton(
+                                child: Text('Cancel'),
+                                onPressed: () {
+                                  Navigator.of(c).pop();
+                                }),
+                            FlatButton(
+                                child: Text('Delete'),
+                                color: Colors.redAccent,
+                                onPressed: () async{
+                                  // deleteUser();
+                                })
+                          ],
+                        ),
                   );
                 },
                 leading: Icon(Icons.block),
@@ -252,7 +270,7 @@ class _HomeState extends State<Account> {
                 onTap: () async{
                   await FirebaseAuth.instance.signOut().then((val){
                     Navigator.of(context).pop();
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => StartUp(), settings: RouteSettings(name: "StartUpView")));
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => StartUp()));
                   }).catchError((e){
                     print(e.toString());
                   });
@@ -286,5 +304,97 @@ class _HomeState extends State<Account> {
           title: Text("Terms and Condition"),
         ),
         path: pdfPath);
+  }
+
+  void deleteUser() async{
+
+    await Firestore.instance.collection('profile').document(user.uid).updateData({
+      'status' : 2,
+    }).then((value) {
+      Firestore.instance.collection('user').document(user.uid).updateData({
+        'status': 2,
+        'deleted_at': DateTime.now(),
+      }).then((value) async {
+        //cancel all published task
+        QuerySnapshot result = await Firestore.instance.collection('task')
+            .where('created_By',
+            isEqualTo: Firestore.instance.collection('user').document())
+            .where('status', whereIn: ['Ongoing', 'Open'])
+            .getDocuments();
+        result.documents.forEach((doc) {
+          Firestore.instance.collection('task')
+              .document(doc.documentID)
+              .updateData({
+            'status': 'Cancelled'
+          });
+        });
+
+        //cancel ongoing tasks that is service provider
+        QuerySnapshot spResult = await Firestore.instance.collection('task')
+            .where('offered_by',
+            isEqualTo: Firestore.instance.collection('user').document())
+            .where('status', whereIn: ['Ongoing', 'Open'])
+            .getDocuments();
+        spResult.documents.forEach((doc) {
+          Task task = new Task();
+          task.id = doc.documentID;
+          task.offeredBy = doc.data['offered_by'];
+          task.createdBy = doc.data['created_by'];
+          Firestore.instance.collection('task')
+              .document(doc.documentID)
+              .updateData({
+            'status': 'Cancelled'
+          });
+
+          Firestore.instance.collection('wallet').document(task.createdBy.documentID).collection('credit').document().setData(
+            {
+              'amount' : doc.data[''],
+              'category' : 'Refund',
+              'createdAt' : DateTime.now(),
+              'payout' : false,
+              'status' : 'Success',
+              'taskRef' : Firestore.instance.collection('task').document(doc.documentID)
+            }
+          );
+
+          NotificationService.instance.generateNotification(7, task, task.offeredBy.documentID);
+        });
+
+      }).then((value) async {
+        //delete all offer
+        QuerySnapshot offerResult = await Firestore.instance.collection('offer')
+            .where('user_id', isEqualTo: user.uid)
+            .getDocuments();
+        offerResult.documents.forEach((doc) {
+          Firestore.instance.document(doc.documentID).delete();
+        });
+
+        //delete all bookmark
+        QuerySnapshot bmResult = await Firestore.instance.collection('bookmark')
+            .where('user_id', isEqualTo: user.uid)
+            .getDocuments();
+        bmResult.documents.forEach((doc) {
+          Firestore.instance.document(doc.documentID).delete();
+        });
+
+
+      }).then((value) {
+        user.delete().then((value) {
+          Navigator.of(context).pop();
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => StartUp()));
+        });
+      }).then((value) {
+        Fluttertoast.showToast(
+            msg: "Account Deleted.",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.black54,
+            textColor: Colors.white,
+            fontSize: 16.0
+        );
+      });
+    });
   }
 }

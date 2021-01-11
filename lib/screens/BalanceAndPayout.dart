@@ -49,7 +49,7 @@ class _HomeState extends State<BalanceAndPayout> {
                       .collection('wallet')
                       .document(user.uid)
                       .collection('debit')
-                      .where('category', isEqualTo: "Debit")
+                      .where('category', whereIn: ['Debit','Refund'])
                       .snapshots(),
                   builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
                   if(!snapshot.hasData) {

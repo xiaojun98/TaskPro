@@ -1,4 +1,3 @@
-import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 import 'package:testapp/screens/CreateTask.dart';
-import 'package:testapp/services/analytics_service.dart';
 import '../models/Task.dart';
 import '../models/Profile.dart';
 import 'package:intl/intl.dart';
@@ -14,6 +12,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'ViewProfile.dart';
 import 'CreateReport.dart';
 import 'package:testapp/services/stripeService.dart';
+import 'package:testapp/models/Review.dart';
+import 'WriteReview.dart';
 
 class MySingleTaskView extends StatefulWidget {
   FirebaseUser user;
@@ -29,7 +29,6 @@ class _HomeState extends State<MySingleTaskView> {
   _HomeState(this.user, this.task);
   TextStyle _style = TextStyle(fontFamily: 'OpenSans-R',fontSize: 16,);
   bool ownTask = false;
-  final _analyticsService = AnalyticsServices();
 
   void initState(){
     super.initState();
@@ -37,13 +36,11 @@ class _HomeState extends State<MySingleTaskView> {
   }
 
   Widget build(BuildContext context) {
-    FirebaseAnalytics().setCurrentScreen(screenName: "TaskDetailScreen");
     List<String> tagList = [];
     ownTask = task.createdBy.documentID == user.uid;
     if(task.tags!=null && task.tags.length>0)
       tagList = task.tags.split(',').map((tag) => tag.trim()).toList();
     tagList.insert(0, task.category);
-    _analyticsService.logTaskViewed();
     return Scaffold(
       appBar: AppBar(
         title : Text('Task Details'),
@@ -56,7 +53,7 @@ class _HomeState extends State<MySingleTaskView> {
               if(result == 0) {
                 await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => CreateTask(user: user, task: task,), settings: RouteSettings(name: "TaskFormView"))
+                    MaterialPageRoute(builder: (context) => CreateTask(user: user, task: task,))
                 );
                 setState(() {});
               } else {
@@ -75,14 +72,26 @@ class _HomeState extends State<MySingleTaskView> {
                         ),
                         FlatButton(
                           onPressed: () {
-                            Firestore.instance.collection('task').document(task.id).updateData({
-                              'updated_by': Firestore.instance.document('users/'+user.uid),
-                              'updated_at': DateTime.now(),
-                              'status': 'Cancelled',
-                            });
-                            _analyticsService.logTaskCancelled();
-                            Navigator.of(context).pop(true);
-                          },
+                            if(task.offeredBy == null){
+                              Firestore.instance.collection('task').document(task.id).updateData({
+                                'updated_by': Firestore.instance.document('users/'+user.uid),
+                                'updated_at': DateTime.now(),
+                                'status': 'Cancelled',
+                              });
+                              Navigator.of(context).pop(true);
+                            }
+                            else{
+                              Navigator.of(context).pop(true);
+                              showDialog(
+                                  context: context,
+                                  barrierDismissible: true,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: Text('Error Cancel Task'),
+                                      content: Text('You cannot cancel a task which accepted an offer. To proceed for refund, please make a Report under Category [Refund].'),
+                                    );
+                                  });
+                            }},
                           textColor: Theme.of(context).primaryColor,
                           child: const Text('Yes, Cancel'),
                         ),
@@ -117,7 +126,7 @@ class _HomeState extends State<MySingleTaskView> {
                           child: Text('Yes'),
                           onPressed: () {
                             Navigator.pop(c,true);
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => CreateReport(user: user, category: 'Task Related Issues', taskId: task.id, profileId: null,), settings: RouteSettings(name: "ReportFormView")));
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => CreateReport(user: user, category: 'Task Related Issues', taskId: task.id, profileId: null,)));
                           }
                       ),
                       FlatButton(
@@ -148,12 +157,12 @@ class _HomeState extends State<MySingleTaskView> {
                         if (snapshot.hasData && snapshot.data.exists) {
                           username = snapshot.data.data['name'];
                           profilePic = snapshot.data.data['profile_pic'];
-                          profile = new Profile(snapshot);
+                          profile = new Profile.AsyncDs(snapshot);
                         }
                         return InkWell(
                           onTap: (){
                             Navigator.push(context, MaterialPageRoute(
-                                builder: (context) => ViewProfile(user : user , profile : profile), settings: RouteSettings(name: "ProfileView")));
+                                builder: (context) => ViewProfile(user : user , profile : profile)));
                           },
                           child: Row(
                             children: <Widget>[
@@ -211,7 +220,6 @@ class _HomeState extends State<MySingleTaskView> {
                               'user_id': user.uid,
                               'task_id': task.id,
                             });
-                            _analyticsService.logBookmarkAdded();
                           },
                         );
                       },
@@ -223,11 +231,11 @@ class _HomeState extends State<MySingleTaskView> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      width: 240,
+                      width: 230,
                       child: Text(task.title, style: TextStyle(fontFamily: 'OpenSans-R', fontSize: 20, fontWeight: FontWeight.bold)),
                     ),
                     Container(
-                      padding: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+                      padding: EdgeInsets.symmetric(vertical: 5, horizontal: 4),
                       decoration: BoxDecoration(border: Border.all(color: Colors.amber), borderRadius: BorderRadius.circular(5)),
                       child: Text(task.status,style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),),
                     ),
@@ -402,8 +410,40 @@ class _HomeState extends State<MySingleTaskView> {
                   },
                 ),),
 
+                task.offeredBy== null ? Container() :
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: 20,),
+                        Text('Service Provider :',style: TextStyle(fontFamily: 'OpenSans-R', fontSize: 12, color: Colors.grey)),
+                        SizedBox(height: 10,),
+                        StreamBuilder<DocumentSnapshot>(
+                            stream: Firestore.instance.collection('profile').document(task.offeredBy.documentID).snapshots(),
+                            builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+                              String username;
+                              Profile profile;
+                              if (snapshot.hasData && snapshot.data.exists) {
+                                print(username);
+                                username = snapshot.data.data['name'];
+                                profile = new Profile.AsyncDs(snapshot);
+                              }
+                              return InkWell(
+                                onTap: (){
+                                  if(profile!=null){
+                                    Navigator.push(context, MaterialPageRoute(
+                                        builder: (context) => ViewProfile(user : user , profile : profile)));
+                                  }
+                                },
+                                child: Text((username!=null && username!='') ? username : 'User does not exist.',style: TextStyle(color : Colors.blueGrey, fontWeight: FontWeight.bold, fontSize: 16),),
+                              );
+                            }
+                        ),
+                      ],
+                    ),
+
                 SizedBox(height: 30,),
                 buildActionButtons(context, user, task, ownTask),
+
             ]),
           )
       ),
@@ -411,35 +451,7 @@ class _HomeState extends State<MySingleTaskView> {
   }
 }
 
-// payViaNewCard(BuildContext context , Task task) async {
-//   ProgressDialog dialog = new ProgressDialog(context);
-//   dialog.style(
-//       message: 'Please wait...'
-//   );
-//   await dialog.show();
-//   var response = await StripeService.payWithNewCard(
-//       amount: task.fee.toString(),
-//       currency: 'myr'
-//   );
-//   if (response.success){
-//     Firestore.instance.collection('task').document(task.id).updateData({
-//       'offered_by': Firestore.instance.document('users/'+offerProfiles[index].id),
-//       'status': 'Ongoing',
-//       'updated_by': Firestore.instance.document('users/'+user.uid),
-//       'updated_at': DateTime.now(),
-//     })
-//   }
-//   await dialog.hide();
-//   Scaffold.of(context).showSnackBar(
-//       SnackBar(
-//         content: Text(response.message),
-//         duration: new Duration(milliseconds: response.success == true ? 1200 : 3000),
-//       )
-//   );
-// }
-
 Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bool ownTask){
-  final _analyticsService = AnalyticsServices();
   if(ownTask) {
     if(task.status=='Open') {
       return Row(
@@ -511,10 +523,10 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
                                     profile.profilepic = doc.data["profile_pic"];
                                     Timestamp j = doc.data["joined"];
                                     profile.joined = j.toDate().toString().substring(0, 10);
-                                    profile.posted = doc.data["task_posted"].toString();
-                                    profile.completed = doc.data["task_completed"].toString();
-                                    profile.reviewNum = doc.data["review_num"].toString();
-                                    profile.rating = doc.data["rating"].toString();
+                                    profile.posted = doc.data["task_posted"];
+                                    profile.completed = doc.data["task_completed"];
+                                    profile.reviewNum = doc.data["review_num"];
+                                    profile.rating = double.parse(doc.data["rating"].toString());
                                     profile.gallery = doc.data["gallery"];
                                     offerProfiles.add(profile);
                                   }
@@ -535,7 +547,7 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
                                                     children: [
                                                       GestureDetector(
                                                         onTap: (){
-                                                          Navigator.push(context, MaterialPageRoute(builder: (context) => ViewProfile(user : user, profile : offerProfiles[index]), settings: RouteSettings(name: "ProfileView")));
+                                                          Navigator.push(context, MaterialPageRoute(builder: (context) => ViewProfile(user : user, profile : offerProfiles[index])));
                                                         },
                                                         child: CircleAvatar(
                                                           backgroundImage: (offerProfiles[index]
@@ -584,6 +596,7 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
                                                                             amount: (task.fee * 100).toInt().toString(),
                                                                             currency: 'myr'
                                                                         );
+
                                                                         if (response.success){
                                                                           Firestore.instance.collection('wallet').document(user.uid).collection('credit').add({
                                                                             'amount' : task.fee,
@@ -597,20 +610,26 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
                                                                             'status': 'Ongoing',
                                                                             'updated_by': Firestore.instance.document('users/'+user.uid),
                                                                             'updated_at': DateTime.now(),
+                                                                            'payment' : Firestore.instance.document('wallet/' + user.uid+ '/credit/' + value.documentID),
                                                                             'creditId' : value.documentID,
                                                                             })
                                                                           });
                                                                         }
-                                                                        await dialog.hide();
-                                                                        Scaffold.of(context).showSnackBar(
-                                                                            SnackBar(
-                                                                              content: Text(response.message),
-                                                                              duration: new Duration(milliseconds: response.success == true ? 1200 : 3000),
-                                                                            )
-                                                                        );
-                                                                        _analyticsService.logOfferAccepted();
-                                                                        Navigator.of(context).pop(true);
-                                                                        Navigator.pop(context);
+
+                                                                        await dialog.hide().then((value) {
+                                                                          Navigator.pop(context);
+                                                                          Navigator.pop(context);
+                                                                          String msg = response.message;
+                                                                          showDialog(
+                                                                              context: context,
+                                                                              barrierDismissible: true,
+                                                                              builder: (context) {
+                                                                                return AlertDialog(
+                                                                                  title: Text('Error Payment'),
+                                                                                  content: Text('$msg Please check your card balance and try again.'),
+                                                                                );
+                                                                              });
+                                                                        });
                                                                       },
                                                                       textColor: Theme.of(context).primaryColor,
                                                                       child: const Text('Yes, Accept'),
@@ -687,6 +706,43 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
         ],
       );
     }
+    //service consumer write review
+    else if (task.status== 'Completed' || task.status== 'Expired' || task.status== 'Cancelled'){
+      bool reviewed = checkReviewed(Firestore.instance.collection('task').document(task.id), Firestore.instance.collection('users').document(user.uid)) as bool;
+      if(task.offeredBy== null){
+        return Text("The task is " + task.status.toString());
+      }
+      else if(reviewed){
+        return Text("You have wrote a review.");
+      }
+      else if (!reviewed){
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("The task is " + task.status.toString()),
+            SizedBox(height: 10,),
+            FlatButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => WriteReview(user: user, ownTask : ownTask, task: task,)));
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Write Review',  textAlign: TextAlign.center, style: TextStyle(fontSize: 16,
+                      color: Colors.black,
+                      fontFamily: 'OpenSansR'),),
+                ],
+              ),
+              shape: RoundedRectangleBorder(
+                  borderRadius: new BorderRadius.circular(30.0)),
+              color: Colors.amber,
+            ),
+          ],
+        );
+      }
+    }
     return Container();
   } else {
     if(task.status=='Open') {
@@ -715,7 +771,6 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
                   Firestore.instance.collection('task')
                       .document(task.id)
                       .updateData({'offer_num': FieldValue.increment(-1)});
-                  _analyticsService.logOfferCancelled();
                 },
                 child: Text('Cancel Offer', style: TextStyle(fontSize: 16,
                     color: Colors.amber,
@@ -733,7 +788,6 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
                   Firestore.instance.collection('task')
                       .document(task.id)
                       .updateData({'offer_num': FieldValue.increment(1)});
-                  _analyticsService.logOfferSent();
                 },
                 child: Row(
                   children: [
@@ -798,14 +852,46 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
         ],
       );
     }
-    return null;
+    //service provider write review
+    else if (task.status== 'Completed' || task.status== 'Expired' || task.status== 'Cancelled'){
+      bool reviewed = checkReviewed(Firestore.instance.collection('task').document(task.id), task.offeredBy) as bool;
+      if(reviewed){
+        return Text("You have wrote a review.");
+      }
+      if(!reviewed){
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("The task is " + task.status.toString()),
+            SizedBox(height: 10,),
+            FlatButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => WriteReview(user: user, ownTask : ownTask, task: task,)));
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Write Review', textAlign: TextAlign.center, style: TextStyle(fontSize: 16,
+                    color: Colors.black,
+                    fontFamily: 'OpenSansR',
+                  ),),
+                ],
+              ),
+              shape: RoundedRectangleBorder(
+                  borderRadius: new BorderRadius.circular(30.0)),
+              color: Colors.amber,
+            ),
+          ],
+        );
+      }
+    }
+    return Container();
   }
-
-
 }
 
 checkTaskCompleted(String taskId) async {
-  final _analyticsService = AnalyticsServices();
   Task checkTask = new Task();
   Firestore.instance.collection("task").document(taskId).get().then((doc) {
     checkTask.id = doc.data['id'];
@@ -829,7 +915,6 @@ checkTaskCompleted(String taskId) async {
     checkTask.isCompleteByAuthor = doc.data['is_complete_by_author'];
     checkTask.isCompleteByProvider = doc.data['is_complete_by_provider'];
     checkTask.offerNum = doc.data['offer_num'];
-    checkTask.rating = doc.data['rating'];
     checkTask.creditId = doc.data['creditId'];
     if (checkTask.isCompleteByAuthor && checkTask.isCompleteByProvider){
       Firestore.instance.collection('wallet').document(checkTask.offeredBy.documentID).collection("debit").add({
@@ -843,12 +928,20 @@ checkTaskCompleted(String taskId) async {
         Firestore.instance.collection('task').document(taskId).updateData({
           'debitId' : value.documentID,
         });
+      }).then((value) {
+        int task_completed;
+        Firestore.instance.collection('profile').document(checkTask.offeredBy.documentID).get().then((profile) {
+          task_completed = profile.data['task_completed'];
+        });
+        DocumentReference ref = Firestore.instance.collection('profile').document(checkTask.offeredBy.documentID);
+        ref.updateData({
+          'task_completed' : task_completed += 1,
+        });
       });
     }
   }).then((value) {
     Firestore.instance.collection('wallet').document(checkTask.createdBy.documentID).collection('credit').document(checkTask.creditId).updateData({
         'status' : 'Success',
     });
-    _analyticsService.logTaskCompleted();
   });
 }
