@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -38,6 +39,7 @@ class _HomeState extends State<Account> {
   String _code = '';
 
   Widget build(BuildContext context) {
+    FirebaseAnalytics().setCurrentScreen(screenName: "AccountScreen");
 
     return Scaffold(
       appBar: AppBar(title : Text('Account'),
@@ -86,7 +88,7 @@ class _HomeState extends State<Account> {
               ListTile(
                 onTap: (){
                   Navigator.push(context, MaterialPageRoute(
-                      builder: (context) => ViewProfile(user : user, profile : profile)));
+                      builder: (context) => ViewProfile(user : user, profile : profile), settings: RouteSettings(name: "ProfileView")));
                 },
                 leading: Icon(Icons.contacts),
                 title: Text("View Profile", style : _style2),
@@ -95,7 +97,7 @@ class _HomeState extends State<Account> {
               ListTile(
                 onTap: (){
                   Navigator.push(context, MaterialPageRoute(
-                      builder: (context) => EditProfile(user : user, profile : profile)));
+                      builder: (context) => EditProfile(user : user, profile : profile), settings: RouteSettings(name: "ProfileFormView")));
                 },
                 leading: Icon(Icons.settings),
                 title: Text("Edit Profile", style : _style2),
@@ -115,7 +117,7 @@ class _HomeState extends State<Account> {
             children: <Widget>[
               ListTile(
                 onTap: (){
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => BalanceAndPayout(user : user)));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => BalanceAndPayout(user : user), settings: RouteSettings(name: "BalanceAndPayoutView")));
                 },
                 leading: Icon(Icons.monetization_on),
                 title: Text("Balance and Payout", style : _style2),
@@ -123,7 +125,7 @@ class _HomeState extends State<Account> {
               ),
               ListTile(
                 onTap: (){
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => SetupStripe(user : user)));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => SetupStripe(user : user), settings: RouteSettings(name: "SetupStripeView")));
                 },
                 leading: Icon(Icons.account_balance_wallet),
                 title: Text("Set Up Stripe", style : _style2),
@@ -139,7 +141,7 @@ class _HomeState extends State<Account> {
               // ),
               ListTile(
                 onTap: (){
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => TransactionHistory(user : user)));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => TransactionHistory(user : user), settings: RouteSettings(name: "TransactionHistoryView")));
                 },
                 leading: Icon(Icons.history),
                 title: Text("Transaction History", style : _style2),
@@ -168,7 +170,7 @@ class _HomeState extends State<Account> {
             children: <Widget>[
               ListTile(
                 onTap: (){
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => CreateReport(user: user, category: null, taskId: null, profileId: null,)));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => CreateReport(user: user, category: null, taskId: null, profileId: null,), settings: RouteSettings(name: "ReportFormView")));
                 },
                 leading: Icon(Icons.report_problem),
                 title: Text("Report an issue", style : _style2),
@@ -179,7 +181,7 @@ class _HomeState extends State<Account> {
                   String pdf = await loadFile('https://firebasestorage.googleapis.com/v0/b/taskpro-47370.appspot.com/o/Terms%20and%20Condition%2FTerms%20and%20Condition%20draft%20(1).pdf?alt=media&token=80fdb31d-dc18-43ff-b1d9-f2a2c8eff064');
                   Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => viewPdf(pdf))
+                      MaterialPageRoute(builder: (context) => viewPdf(pdf), settings: RouteSettings(name: "PDFView"))
                       );
                 },
                 leading: Icon(Icons.verified_user),
@@ -270,7 +272,7 @@ class _HomeState extends State<Account> {
                 onTap: () async{
                   await FirebaseAuth.instance.signOut().then((val){
                     Navigator.of(context).pop();
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => StartUp()));
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => StartUp(), settings: RouteSettings(name: "StartUpView")));
                   }).catchError((e){
                     print(e.toString());
                   });
@@ -382,7 +384,7 @@ class _HomeState extends State<Account> {
         user.delete().then((value) {
           Navigator.of(context).pop();
           Navigator.push(
-              context, MaterialPageRoute(builder: (context) => StartUp()));
+              context, MaterialPageRoute(builder: (context) => StartUp(), settings: RouteSettings(name: "StartUpView")));
         });
       }).then((value) {
         Fluttertoast.showToast(

@@ -1,6 +1,8 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:testapp/services/analytics_service.dart';
 import 'Login.dart';
 import 'StartUp.dart';
 import 'MainNavigation.dart';
@@ -29,6 +31,7 @@ class _HomeState extends State<Register> {
   final _emailController = TextEditingController();
   final _idnumController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final _analyticsService = AnalyticsServices();
 
   Future <bool> registerUser(String name, String phnum, String email, String idnum, BuildContext context) async {
     FirebaseAuth _auth = FirebaseAuth.instance;
@@ -99,9 +102,11 @@ class _HomeState extends State<Register> {
                                 });
                             // Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                             }).then((value){
+                              _analyticsService.logSignUp();
                               Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                               Navigator.push(context, MaterialPageRoute(
-                                  builder: (context) => MainNavigation(user: user)
+                                  builder: (context) => MainNavigation(user: user),
+                                  settings: RouteSettings(name: "MainView")
                               ));
                           });
                         }
@@ -120,6 +125,7 @@ class _HomeState extends State<Register> {
 
   @override
   Widget build(BuildContext context) {
+    FirebaseAnalytics().setCurrentScreen(screenName: "RegisterScreen");
     return Scaffold(
       appBar: AppBar(title: Text('TaskPro'),
         centerTitle: true,
@@ -275,7 +281,7 @@ class _HomeState extends State<Register> {
                                                   Navigator.push(
                                                       context,
                                                       MaterialPageRoute(
-                                                          builder: (context) => Register()));
+                                                          builder: (context) => Register(), settings: RouteSettings(name: "RegisterView")));
                                                 }),
                                             FlatButton(
                                                 child: Text('Login'),
@@ -285,7 +291,7 @@ class _HomeState extends State<Register> {
                                                       context,
                                                       MaterialPageRoute(
                                                           builder: (context) =>
-                                                              Login()));
+                                                              Login(), settings: RouteSettings(name: "LoginView")));
                                                 })
                                           ],
                                         );
@@ -308,7 +314,7 @@ class _HomeState extends State<Register> {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => StartUp()));
+                                      builder: (context) => StartUp(), settings: RouteSettings(name: "StartUpView")));
                             },
                             child: Text('Cancel',
                               style: TextStyle(fontSize: 18,

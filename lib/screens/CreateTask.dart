@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +6,7 @@ import 'package:moneytextformfield/moneytextformfield.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:testapp/screens/MyTask.dart';
+import 'package:testapp/services/analytics_service.dart';
 import '../models/Task.dart';
 import '../services/loadingDialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -32,9 +34,11 @@ class _HomeState extends State<CreateTask> {
   TextEditingController _tagsInputController = new TextEditingController();
   TextEditingController _locationInputController = new TextEditingController();
   TextEditingController _feeInputController = new TextEditingController();
+  final _analyticsService = AnalyticsServices();
 
   @override
   Widget build(BuildContext context) {
+    FirebaseAnalytics().setCurrentScreen(screenName: "TaskFormScreen");
     DateTime now = DateTime.now();
     if(task.offerDeadline == null || task.offerDeadline.isBefore(now)) {
       task.offerDeadline = now;
@@ -528,6 +532,7 @@ class _HomeState extends State<CreateTask> {
                             'location': _locationInputController.text,
                             'fee': double.parse(_feeInputController.text),
                           }).then((value) {
+                            _analyticsService.logDraftSaved();
                             Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                             Navigator.pop(context);
                           });
@@ -557,6 +562,7 @@ class _HomeState extends State<CreateTask> {
                             'is_complete_by_provider': task.isCompleteByProvider,
                             'offer_num': 0,
                           }).then((value) {
+                            _analyticsService.logDraftSaved();
                             Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                             Navigator.pop(context);
                           });
@@ -594,6 +600,7 @@ class _HomeState extends State<CreateTask> {
                             'fee': double.parse(_feeInputController.text),
                             'status': 'Open',
                           }).then((value) {
+                            _analyticsService.logTaskCreated();
                             Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                             Navigator.pop(context, true);
                           });
@@ -631,6 +638,7 @@ class _HomeState extends State<CreateTask> {
                                 'task_posted' : task_posted += 1,
                               });
                             }).then((value) {
+                              _analyticsService.logTaskCreated();
                               Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                               Navigator.pop(context, true);
                               Navigator.push(
@@ -667,6 +675,7 @@ class _HomeState extends State<CreateTask> {
                           'location': _locationInputController.text,
                           'fee': double.parse(_feeInputController.text),
                         }).then((value) {
+                          _analyticsService.logTaskEdited();
                           Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                           Navigator.pop(context, true);
                           Navigator.push(
