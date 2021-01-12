@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:moneytextformfield/moneytextformfield.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:testapp/screens/MainNavigation.dart';
 import 'package:testapp/screens/MyTask.dart';
 import '../models/Task.dart';
 import '../services/loadingDialog.dart';
@@ -669,9 +670,8 @@ class _HomeState extends State<CreateTask> {
                         }).then((value) {
                           Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
                           Navigator.pop(context, true);
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => MyTask(user: user))
+                          Navigator.push(context,
+                              MaterialPageRoute(builder: (context) => MainNavigation(user:user))
                           );
                         });
                       } else {

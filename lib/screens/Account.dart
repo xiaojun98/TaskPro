@@ -190,43 +190,43 @@ class _HomeState extends State<Account> {
           ),
         ),
         SizedBox(height:10),
-        Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Text('Notification Settings',style : _style1,textAlign: TextAlign.left,)),
-        SwitchListTile(
-          activeColor: Colors.amberAccent[400],
-          contentPadding: EdgeInsets.all(20),
-          value: profile.notiEnaled,
-          title: Text('Receive notification',style: TextStyle(color: Colors.grey[850])),
-          onChanged: (val){
-            profile.notiEnaled = val;
-            Firestore.instance.collection("profile").document(user.uid).updateData({
-              'notificationEnabled' : val,
-            });
-            if(val){
-              Fluttertoast.showToast(
-                  msg: "Notification is Enabled",
-                  toastLength: Toast.LENGTH_SHORT,
-                  gravity: ToastGravity.BOTTOM,
-                  timeInSecForIosWeb: 1,
-                  backgroundColor: Colors.black54,
-                  textColor: Colors.white,
-                  fontSize: 16.0
-              );
-            }
-            else{
-              Fluttertoast.showToast(
-                  msg: "Notification is Disabled",
-                  toastLength: Toast.LENGTH_SHORT,
-                  gravity: ToastGravity.BOTTOM,
-                  timeInSecForIosWeb: 1,
-                  backgroundColor: Colors.black54,
-                  textColor: Colors.white,
-                  fontSize: 16.0
-              );
-            }
-          },
-        ),
+        // Padding(
+        //     padding: EdgeInsets.symmetric(horizontal: 20),
+        //     child: Text('Notification Settings',style : _style1,textAlign: TextAlign.left,)),
+        // SwitchListTile(
+        //   activeColor: Colors.amberAccent[400],
+        //   contentPadding: EdgeInsets.all(20),
+        //   value: profile.notiEnaled,
+        //   title: Text('Receive notification',style: TextStyle(color: Colors.grey[850])),
+        //   onChanged: (val){
+        //     profile.notiEnaled = val;
+        //     Firestore.instance.collection("profile").document(user.uid).updateData({
+        //       'notificationEnabled' : val,
+        //     });
+        //     if(val){
+        //       Fluttertoast.showToast(
+        //           msg: "Notification is Enabled",
+        //           toastLength: Toast.LENGTH_SHORT,
+        //           gravity: ToastGravity.BOTTOM,
+        //           timeInSecForIosWeb: 1,
+        //           backgroundColor: Colors.black54,
+        //           textColor: Colors.white,
+        //           fontSize: 16.0
+        //       );
+        //     }
+        //     else{
+        //       Fluttertoast.showToast(
+        //           msg: "Notification is Disabled",
+        //           toastLength: Toast.LENGTH_SHORT,
+        //           gravity: ToastGravity.BOTTOM,
+        //           timeInSecForIosWeb: 1,
+        //           backgroundColor: Colors.black54,
+        //           textColor: Colors.white,
+        //           fontSize: 16.0
+        //       );
+        //     }
+        //   },
+        // ),
         Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: Text('Account Settings',style : _style1,textAlign: TextAlign.left,)),
@@ -256,7 +256,8 @@ class _HomeState extends State<Account> {
                                 child: Text('Delete'),
                                 color: Colors.redAccent,
                                 onPressed: () async{
-                                  // deleteUser();
+                                  Navigator.of(c).pop();
+                                  deleteUser();
                                 })
                           ],
                         ),
@@ -308,20 +309,14 @@ class _HomeState extends State<Account> {
 
   void deleteUser() async{
 
-    await Firestore.instance.collection('profile').document(user.uid).updateData({
-      'status' : 2,
-    }).then((value) {
-      Firestore.instance.collection('user').document(user.uid).updateData({
-        'status': 2,
-        'deleted_at': DateTime.now(),
-      }).then((value) async {
         //cancel all published task
         QuerySnapshot result = await Firestore.instance.collection('task')
-            .where('created_By',
-            isEqualTo: Firestore.instance.collection('user').document())
+            .where('created_by',
+            isEqualTo: Firestore.instance.collection('users').document(user.uid))
             .where('status', whereIn: ['Ongoing', 'Open'])
             .getDocuments();
         result.documents.forEach((doc) {
+          print("*************" + doc.data['title']);
           Firestore.instance.collection('task')
               .document(doc.documentID)
               .updateData({
@@ -332,7 +327,7 @@ class _HomeState extends State<Account> {
         //cancel ongoing tasks that is service provider
         QuerySnapshot spResult = await Firestore.instance.collection('task')
             .where('offered_by',
-            isEqualTo: Firestore.instance.collection('user').document())
+            isEqualTo: Firestore.instance.collection('users').document(user.uid))
             .where('status', whereIn: ['Ongoing', 'Open'])
             .getDocuments();
         spResult.documents.forEach((doc) {
@@ -346,9 +341,9 @@ class _HomeState extends State<Account> {
             'status': 'Cancelled'
           });
 
-          Firestore.instance.collection('wallet').document(task.createdBy.documentID).collection('credit').document().setData(
+          Firestore.instance.collection('wallet').document(task.createdBy.documentID).collection('debit').document().setData(
             {
-              'amount' : doc.data[''],
+              'amount' : doc.data['fee'],
               'category' : 'Refund',
               'createdAt' : DateTime.now(),
               'payout' : false,
@@ -360,7 +355,6 @@ class _HomeState extends State<Account> {
           NotificationService.instance.generateNotification(7, task, task.offeredBy.documentID);
         });
 
-      }).then((value) async {
         //delete all offer
         QuerySnapshot offerResult = await Firestore.instance.collection('offer')
             .where('user_id', isEqualTo: user.uid)
@@ -377,13 +371,9 @@ class _HomeState extends State<Account> {
           Firestore.instance.document(doc.documentID).delete();
         });
 
-
-      }).then((value) {
-        user.delete().then((value) {
-          Navigator.of(context).pop();
-          Navigator.push(
-              context, MaterialPageRoute(builder: (context) => StartUp()));
-        });
+        Firestore.instance.collection('users').document(user.uid).delete().then((value) {
+        user.delete();
+        Firestore.instance.collection('profile').document(user.uid).delete();
       }).then((value) {
         Fluttertoast.showToast(
             msg: "Account Deleted.",
@@ -394,7 +384,11 @@ class _HomeState extends State<Account> {
             textColor: Colors.white,
             fontSize: 16.0
         );
+      }).whenComplete(() {
+        Navigator.of(context).pop();
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => StartUp()));
       });
-    });
+    // });
   }
 }
