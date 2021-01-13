@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 
 import 'Login.dart';
@@ -29,7 +28,7 @@ class _OurRootState extends State<OurRoot> {
     super.didChangeDependencies();
 
     FirebaseAuth _auth = FirebaseAuth.instance;
-    user = _auth.currentUser() as FirebaseUser;
+    user = await _auth.currentUser();
 
     if (user != null) {
       setState(() {
@@ -51,7 +50,7 @@ class _OurRootState extends State<OurRoot> {
         retVal = StartUp();
         break;
       case AuthStatus.notLoggedIn:
-        retVal = Login();
+        retVal = StartUp();
         break;
       case AuthStatus.loggedIn:
         retVal = MainNavigation(user: user);

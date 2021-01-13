@@ -8,7 +8,7 @@ void main() => runApp(MaterialApp(
     accentColor: Colors.amber[800],
     cursorColor: Colors.amberAccent[400],
   ),
-  home : StartUp(),
-  // home : OurRoot(),
+  // home : StartUp(),
+  home : OurRoot(),
 ))
 ;

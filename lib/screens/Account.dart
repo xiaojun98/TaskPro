@@ -273,7 +273,7 @@ class _HomeState extends State<Account> {
                 onTap: () async{
                   await FirebaseAuth.instance.signOut().then((val){
                     Navigator.of(context).pop();
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => StartUp(), settings: RouteSettings(name: "StartUpView")));
+                    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => StartUp(), settings: RouteSettings(name: "StartUpView")),(route)=>false);
                   }).catchError((e){
                     print(e.toString());
                   });

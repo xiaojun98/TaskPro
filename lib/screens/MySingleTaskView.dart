@@ -31,17 +31,24 @@ class _HomeState extends State<MySingleTaskView> {
   _HomeState(this.user, this.task);
   TextStyle _style = TextStyle(fontFamily: 'OpenSans-R',fontSize: 16,);
   bool ownTask = false;
+  bool reviewed = false;
   final _analyticsService = AnalyticsServices();
 
   void initState(){
     super.initState();
+    ownTask = task.createdBy.documentID == user.uid;
+    if(ownTask){
+      checkReviewed(Firestore.instance.collection('task').document(task.id), Firestore.instance.collection('users').document(user.uid));
+    }
+    else{
+      checkReviewed(Firestore.instance.collection('task').document(task.id), task.offeredBy);
+    }
     StripeService.init();
   }
 
   Widget build(BuildContext context) {
     FirebaseAnalytics().setCurrentScreen(screenName: "TaskDetailScreen");
     List<String> tagList = [];
-    ownTask = task.createdBy.documentID == user.uid;
     if(task.tags!=null && task.tags.length>0)
       tagList = task.tags.split(',').map((tag) => tag.trim()).toList();
     tagList.insert(0, task.category);
@@ -60,7 +67,6 @@ class _HomeState extends State<MySingleTaskView> {
                     context,
                     MaterialPageRoute(builder: (context) => CreateTask(user: user, task: task,), settings: RouteSettings(name: "TaskFormView"))
                 );
-                setState(() {});
               } else {
                 showDialog(
                   context: context,
@@ -449,16 +455,31 @@ class _HomeState extends State<MySingleTaskView> {
                     ),
 
                 SizedBox(height: 30,),
-                buildActionButtons(context, user, task, ownTask),
+                buildActionButtons(context, user, task, ownTask,reviewed),
 
             ]),
           )
       ),
     );
   }
+  checkReviewed(DocumentReference task, DocumentReference author) async{
+    QuerySnapshot result = await Firestore.instance.collection('review')
+        .where('taskAssociated', isEqualTo: task)
+        .where('reviewBy', isEqualTo: author)
+        .limit(1).getDocuments();
+
+    List <DocumentSnapshot> documents = result.documents;
+    if (documents.length == 1) {
+      //reviewed
+      setState(() {
+        reviewed = true;
+      });
+    }
+  }
 }
 
-Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bool ownTask){
+Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bool ownTask, bool reviewed){
+
   final _analyticsService = AnalyticsServices();
   if(ownTask) {
     if(task.status=='Open') {
@@ -717,7 +738,7 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
     }
     //service consumer write review
     else if (task.status== 'Completed' || task.status== 'Expired' || task.status== 'Cancelled'){
-      bool reviewed = checkReviewed(Firestore.instance.collection('task').document(task.id), Firestore.instance.collection('users').document(user.uid)) as bool;
+
       if(task.offeredBy== null){
         return Text("The task is " + task.status.toString());
       }
@@ -865,7 +886,8 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
     }
     //service provider write review
     else if (task.status== 'Completed' || task.status== 'Expired' || task.status== 'Cancelled'){
-      bool reviewed = checkReviewed(Firestore.instance.collection('task').document(task.id), task.offeredBy) as bool;
+      // bool reviewed = checkReviewed(Firestore.instance.collection('task').document(task.id), task.offeredBy);
+
       if(reviewed){
         return Text("You have wrote a review.");
       }
@@ -958,3 +980,4 @@ checkTaskCompleted(String taskId) async {
     _analyticsService.logTaskCompleted();
   });
 }
+

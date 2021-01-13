@@ -86,7 +86,7 @@ class Profile{
           reviewNum +=1;
         }
         );
-        rating = rating / element.documents.length;
+        rating = double.parse((rating / element.documents.length).toStringAsFixed(1));
       }
     });
     Stream<QuerySnapshot> stream2 = Firestore.instance.collection('task')

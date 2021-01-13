@@ -13,19 +13,4 @@ class Review{
   String taskTitle;
 }
 
- Future<bool> checkReviewed(DocumentReference task, DocumentReference author) async{
-   QuerySnapshot result = await Firestore.instance.collection('review')
-       .where('taskAssociated', isEqualTo: task)
-       .where('reviewBy', isEqualTo: author)
-       .limit(1).getDocuments();
-   List <DocumentSnapshot> documents = result.documents;
-   if (documents.length == 1) {
-     //reviewed
-     return Future<bool>.value(true);
-   }
-   else {
-     //not reviewed
-      return Future<bool>.value(false);
-   }
- }
 

@@ -389,7 +389,9 @@ class _TaskListViewState extends State<TaskListView> {
                       children: [
                         Icon(Icons.location_on, color: Colors.grey, size: 16,),
                         SizedBox(width: 5,),
-                        Text((taskList[index].location!=null && taskList[index].location!='') ? taskList[index].location : '-',),
+                        SizedBox(
+                          width: 135,
+                            child: Text((taskList[index].location!=null && taskList[index].location!='') ? taskList[index].location : '-',overflow: TextOverflow.ellipsis)),
                       ],
                     ),
                     Row(
