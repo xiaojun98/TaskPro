@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 import 'package:testapp/screens/CreateTask.dart';
+import 'package:testapp/services/analytics_service.dart';
 import '../models/Task.dart';
 import '../models/Profile.dart';
 import 'package:intl/intl.dart';
@@ -29,6 +31,7 @@ class _HomeState extends State<MySingleTaskView> {
   _HomeState(this.user, this.task);
   TextStyle _style = TextStyle(fontFamily: 'OpenSans-R',fontSize: 16,);
   bool ownTask = false;
+  final _analyticsService = AnalyticsServices();
 
   void initState(){
     super.initState();
@@ -36,11 +39,13 @@ class _HomeState extends State<MySingleTaskView> {
   }
 
   Widget build(BuildContext context) {
+    FirebaseAnalytics().setCurrentScreen(screenName: "TaskDetailScreen");
     List<String> tagList = [];
     ownTask = task.createdBy.documentID == user.uid;
     if(task.tags!=null && task.tags.length>0)
       tagList = task.tags.split(',').map((tag) => tag.trim()).toList();
     tagList.insert(0, task.category);
+    _analyticsService.logTaskViewed();
     return Scaffold(
       appBar: AppBar(
         title : Text('Task Details'),
@@ -53,7 +58,7 @@ class _HomeState extends State<MySingleTaskView> {
               if(result == 0) {
                 await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => CreateTask(user: user, task: task,))
+                    MaterialPageRoute(builder: (context) => CreateTask(user: user, task: task,), settings: RouteSettings(name: "TaskFormView"))
                 );
                 setState(() {});
               } else {
@@ -78,6 +83,7 @@ class _HomeState extends State<MySingleTaskView> {
                                 'updated_at': DateTime.now(),
                                 'status': 'Cancelled',
                               });
+                              _analyticsService.logTaskCancelled();
                               Navigator.of(context).pop(true);
                             }
                             else{
@@ -126,7 +132,7 @@ class _HomeState extends State<MySingleTaskView> {
                           child: Text('Yes'),
                           onPressed: () {
                             Navigator.pop(c,true);
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => CreateReport(user: user, category: 'Task Related Issues', taskId: task.id, profileId: null,)));
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => CreateReport(user: user, category: 'Task Related Issues', taskId: task.id, profileId: null,), settings: RouteSettings(name: "ReportFormView")));
                           }
                       ),
                       FlatButton(
@@ -162,7 +168,7 @@ class _HomeState extends State<MySingleTaskView> {
                         return InkWell(
                           onTap: (){
                             Navigator.push(context, MaterialPageRoute(
-                                builder: (context) => ViewProfile(user : user , profile : profile)));
+                                builder: (context) => ViewProfile(user : user , profile : profile), settings: RouteSettings(name: "ProfileView")));
                           },
                           child: Row(
                             children: <Widget>[
@@ -220,6 +226,7 @@ class _HomeState extends State<MySingleTaskView> {
                               'user_id': user.uid,
                               'task_id': task.id,
                             });
+                            _analyticsService.logBookmarkAdded();
                           },
                         );
                       },
@@ -452,6 +459,7 @@ class _HomeState extends State<MySingleTaskView> {
 }
 
 Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bool ownTask){
+  final _analyticsService = AnalyticsServices();
   if(ownTask) {
     if(task.status=='Open') {
       return Row(
@@ -547,7 +555,7 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
                                                     children: [
                                                       GestureDetector(
                                                         onTap: (){
-                                                          Navigator.push(context, MaterialPageRoute(builder: (context) => ViewProfile(user : user, profile : offerProfiles[index])));
+                                                          Navigator.push(context, MaterialPageRoute(builder: (context) => ViewProfile(user : user, profile : offerProfiles[index]), settings: RouteSettings(name: "ProfileView")));
                                                         },
                                                         child: CircleAvatar(
                                                           backgroundImage: (offerProfiles[index]
@@ -614,6 +622,7 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
                                                                             'creditId' : value.documentID,
                                                                             })
                                                                           });
+                                                                          _analyticsService.logOfferAccepted();
                                                                         }
 
                                                                         await dialog.hide().then((value) {
@@ -771,6 +780,7 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
                   Firestore.instance.collection('task')
                       .document(task.id)
                       .updateData({'offer_num': FieldValue.increment(-1)});
+                  _analyticsService.logOfferCancelled();
                 },
                 child: Text('Cancel Offer', style: TextStyle(fontSize: 16,
                     color: Colors.amber,
@@ -788,6 +798,7 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
                   Firestore.instance.collection('task')
                       .document(task.id)
                       .updateData({'offer_num': FieldValue.increment(1)});
+                  _analyticsService.logOfferSent();
                 },
                 child: Row(
                   children: [
@@ -892,6 +903,7 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
 }
 
 checkTaskCompleted(String taskId) async {
+  final _analyticsService = AnalyticsServices();
   Task checkTask = new Task();
   Firestore.instance.collection("task").document(taskId).get().then((doc) {
     checkTask.id = doc.data['id'];
@@ -943,5 +955,6 @@ checkTaskCompleted(String taskId) async {
     Firestore.instance.collection('wallet').document(checkTask.createdBy.documentID).collection('credit').document(checkTask.creditId).updateData({
         'status' : 'Success',
     });
+    _analyticsService.logTaskCompleted();
   });
 }

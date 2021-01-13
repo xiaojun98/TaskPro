@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:testapp/models/Report.dart';
 import 'package:testapp/services/NotificationService.dart';
+import 'package:testapp/services/analytics_service.dart';
 import '../services/loadingDialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -37,6 +39,7 @@ class _HomeState extends State<CreateReport> {
   TextEditingController _titleInputController = new TextEditingController();
   TextEditingController _descriptionInputController = new TextEditingController();
   TextEditingController _suggestionInputController = new TextEditingController();
+  final _analyticsService = AnalyticsServices();
 
 
   void initState(){
@@ -57,6 +60,7 @@ class _HomeState extends State<CreateReport> {
 
   @override
   Widget build(BuildContext context) {
+    FirebaseAnalytics().setCurrentScreen(screenName: "ReportFormScreen");
 
     return Scaffold(
       appBar: AppBar(
@@ -107,7 +111,7 @@ class _HomeState extends State<CreateReport> {
                                       Navigator.of(context).pop();
                                       Navigator.push(
                                           context,
-                                          MaterialPageRoute(builder: (context) => ViewReport(report: history,))
+                                          MaterialPageRoute(builder: (context) => ViewReport(report: history,), settings: RouteSettings(name: "ReportView"))
                                       );
                                     },
                                   )
@@ -451,6 +455,7 @@ class _HomeState extends State<CreateReport> {
                                           'suggestion' : _suggestionInputController.text,
                                           'status': 'Pending',
                                         }).then((value) {
+                                          _analyticsService.logReportSubmitted();
                                           Report report = new Report();
                                           report.id = ref.documentID;
                                           NotificationService.instance.generateNotification(1, report , user.uid);
