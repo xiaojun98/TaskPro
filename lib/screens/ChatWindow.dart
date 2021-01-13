@@ -609,18 +609,6 @@ class _HomeState extends State<ChatWindow> {
               'lastMessage': lastMsg,
             });
       });
-//      Firestore.instance.runTransaction((transaction) async {
-//        transaction.set(
-//          documentReference2,
-//            {
-//              'lastTimestamp': DateTime
-//                  .now()
-//                  .millisecondsSinceEpoch
-//                  .toString(),
-//              'lastMessage': lastMsg,
-//            });
-//      });
-
 
       listScrollController.animateTo(0.0,
           duration: Duration(milliseconds: 300), curve: Curves.easeOut);
