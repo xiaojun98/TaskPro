@@ -10,5 +10,11 @@ void main() => runApp(MaterialApp(
   ),
   // home : StartUp(),
   home : OurRoot(),
+  // builder: (context, child) {
+  //   return MediaQuery(
+  //     child: child,
+  //     data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+  //   );
+  // },
 ))
 ;

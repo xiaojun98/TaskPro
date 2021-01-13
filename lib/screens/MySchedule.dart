@@ -138,61 +138,70 @@ class _HomeState extends State<MySchedule> {
                 return StreamBuilder<QuerySnapshot>(
                   stream: Firestore.instance.collection('offer').where('user_id', isEqualTo: user.uid).snapshots(),
                   builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                    List<dynamic> taskIdList = new List();
+
                     if(!snapshot.hasData) {
                       return Center(child: Text('No task found.', style: TextStyle(color: Colors.grey),),);
                     } else {
-                      taskIdList = snapshot.data.documents.map((DocumentSnapshot docSnapshot){
-                        return docSnapshot.data['task_id'];
-                      }).toList();
-                      return StreamBuilder<QuerySnapshot>(
-                        stream: Firestore.instance.collection('task').where('id', whereIn: taskIdList).snapshots(),
-                        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                          if(!snapshot.hasData) {
-                            return Center(child: Text('No task found.', style: TextStyle(color: Colors.grey),),);
-                          }
-                          for (DocumentSnapshot doc in snapshot.data.documents) {
-                            Task task = new Task();
-                            task.id = doc.data['id'];
-                            task.createdBy = doc.data['created_by'];
-                            task.createdAt = doc.data['created_at']?.toDate();
-                            task.updatedBy = doc.data['updated_by'];
-                            task.updatedAt = doc.data['updated_at']?.toDate();
-                            task.author = doc.data['author'];
-                            task.category = doc.data['category'];
-                            task.title = doc.data['title'];
-                            task.description = doc.data['description'];
-                            task.additionalInstruction = doc.data['additional_instruction'];
-                            task.tags = doc.data['tags'];
-                            task.offerDeadline = doc.data['offer_deadline']?.toDate();
-                            task.taskDeadline = doc.data['task_deadline']?.toDate();
-                            task.location = doc.data['location'];
-                            task.fee = double.parse(doc.data['fee'].toString());
-                            task.payment = doc.data['payment'];
-                            task.status = doc.data['status'];
-                            task.offeredBy = doc.data['offered_by'];
-                            task.isCompleteByAuthor = doc.data['is_complete_by_author'];
-                            task.isCompleteByProvider = doc.data['is_complete_by_provider'];
-                            task.offerNum = doc.data['offer_num'];
-                            if(task.offerDeadline.difference(DateTime.now()).inMilliseconds > 0 || task.taskDeadline.difference(DateTime.now()).inMilliseconds > 0){
-                              //redundant
-                              if(task.status!= 'Completed' && task.status!= 'Expired' && task.status!= 'Cancelled'){
-                                taskList.add(task);
-                              }
-                              if(task.status=='Ongoing'){
-                                eventList[task.taskDeadline] = [task.title];
-                                task.upcomingDeadline=task.taskDeadline;
-                              }
-                              else{
-                                eventList[task.offerDeadline] = [task.title];
-                                task.upcomingDeadline=task.offerDeadline;
+                      List<String> taskIdList = [];
+                      for (DocumentSnapshot doc in snapshot.data.documents) {
+                        taskIdList.add(doc.data['task_id']);
+                      }
+                      if(taskIdList.length ==0 && taskList.length == 0){
+                        return Center(child: Text('No task found.', style: TextStyle(color: Colors.grey),),);
+                      }
+                      else if(taskIdList.length ==0 && taskList.length > 0){
+                        return SizedBox (height : 400,child: MyListView(user: user, tab: 'Published', taskList: taskList,));
+                      }
+                      else{
+                        return StreamBuilder<QuerySnapshot>(
+                          stream: Firestore.instance.collection('task').where('id', whereIn: taskIdList).snapshots(),
+                          builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                            if(!snapshot.hasData) {
+                              return Center(child: Text('No task found.', style: TextStyle(color: Colors.grey),),);
+                            }
+                            for (DocumentSnapshot doc in snapshot.data.documents) {
+                              Task task = new Task();
+                              task.id = doc.data['id'];
+                              task.createdBy = doc.data['created_by'];
+                              task.createdAt = doc.data['created_at']?.toDate();
+                              task.updatedBy = doc.data['updated_by'];
+                              task.updatedAt = doc.data['updated_at']?.toDate();
+                              task.author = doc.data['author'];
+                              task.category = doc.data['category'];
+                              task.title = doc.data['title'];
+                              task.description = doc.data['description'];
+                              task.additionalInstruction = doc.data['additional_instruction'];
+                              task.tags = doc.data['tags'];
+                              task.offerDeadline = doc.data['offer_deadline']?.toDate();
+                              task.taskDeadline = doc.data['task_deadline']?.toDate();
+                              task.location = doc.data['location'];
+                              task.fee = double.parse(doc.data['fee'].toString());
+                              task.payment = doc.data['payment'];
+                              task.status = doc.data['status'];
+                              task.offeredBy = doc.data['offered_by'];
+                              task.isCompleteByAuthor = doc.data['is_complete_by_author'];
+                              task.isCompleteByProvider = doc.data['is_complete_by_provider'];
+                              task.offerNum = doc.data['offer_num'];
+                              if(task.offerDeadline.difference(DateTime.now()).inMilliseconds > 0 || task.taskDeadline.difference(DateTime.now()).inMilliseconds > 0){
+                                //redundant
+                                if(task.status!= 'Completed' && task.status!= 'Expired' && task.status!= 'Cancelled'){
+                                  taskList.add(task);
+                                }
+                                if(task.status=='Ongoing'){
+                                  eventList[task.taskDeadline] = [task.title];
+                                  task.upcomingDeadline=task.taskDeadline;
+                                }
+                                else{
+                                  eventList[task.offerDeadline] = [task.title];
+                                  task.upcomingDeadline=task.offerDeadline;
+                                }
                               }
                             }
-                          }
-                          taskList.sort((a,b) => a.upcomingDeadline.compareTo(b.upcomingDeadline));
-                          return SizedBox (height : 400,child: MyListView(user: user, tab: 'Published', taskList: taskList,));
-                        },
-                      );
+                            taskList.sort((a,b) => a.upcomingDeadline.compareTo(b.upcomingDeadline));
+                            return SizedBox (height : 400,child: MyListView(user: user, tab: 'Published', taskList: taskList,));
+                          },
+                        );
+                      }
                     }
                   },
                 );

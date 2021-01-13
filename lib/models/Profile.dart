@@ -101,7 +101,6 @@ class Profile{
 
       else{
         element.documents.forEach((doc) {
-          posted +=1;
           if(doc.data['status'] == "Completed"){
             completed+=1;
           }

@@ -11,6 +11,7 @@ import '../models/Task.dart';
 import '../models/Profile.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'MainNavigation.dart';
 import 'ViewProfile.dart';
 import 'CreateReport.dart';
 import 'package:testapp/services/stripeService.dart';
@@ -802,6 +803,11 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
                       .document(task.id)
                       .updateData({'offer_num': FieldValue.increment(-1)});
                   _analyticsService.logOfferCancelled();
+                  Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => MainNavigation(user: user)),
+                          (route) =>false
+                  );
                 },
                 child: Text('Cancel Offer', style: TextStyle(fontSize: 16,
                     color: Colors.amber,

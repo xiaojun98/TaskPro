@@ -86,51 +86,56 @@ class _HomeState extends State<MyTask> {
               stream: Firestore.instance.collection('offer')
                   .where('user_id', isEqualTo: user.uid).snapshots(),
               builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                List<dynamic> taskIdList = new List();
                 if(!snapshot.hasData) {
                   return Center(child: Text('No offered task found.', style: TextStyle(color: Colors.grey),),);
                 } else {
+                  List<dynamic> taskIdList = new List();
                   taskIdList = snapshot.data.documents.map((DocumentSnapshot docSnapshot){
                     return docSnapshot.data['task_id'];
                   }).toList();
-                  return StreamBuilder<QuerySnapshot>(
-                    stream: Firestore.instance.collection('task').
-                    where('id', whereIn: taskIdList).snapshots(),
-                    builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                      if(!snapshot.hasData) {
-                        return Center(child: Text('No offered found.', style: TextStyle(color: Colors.grey),),);
-                      }
-                      List<Task> taskList = [];
-                      for (DocumentSnapshot doc in snapshot.data.documents) {
-                        Task task = new Task();
-                        task.id = doc.data['id'];
-                        task.createdBy = doc.data['created_by'];
-                        task.createdAt = doc.data['created_at']?.toDate();
-                        task.updatedBy = doc.data['updated_by'];
-                        task.updatedAt = doc.data['updated_at']?.toDate();
-                        task.author = doc.data['author'];
-                        task.category = doc.data['category'];
-                        task.title = doc.data['title'];
-                        task.description = doc.data['description'];
-                        task.additionalInstruction = doc.data['additional_instruction'];
-                        task.tags = doc.data['tags'];
-                        task.offerDeadline = doc.data['offer_deadline']?.toDate();
-                        task.taskDeadline = doc.data['task_deadline']?.toDate();
-                        task.location = doc.data['location'];
-                        task.fee = double.parse(doc.data['fee'].toString());
-                        task.payment = doc.data['payment'];
-                        task.status = doc.data['status'];
-                        task.offeredBy = doc.data['offered_by'];
-                        task.isCompleteByAuthor = doc.data['is_complete_by_author'];
-                        task.isCompleteByProvider = doc.data['is_complete_by_provider'];
-                        task.offerNum = doc.data['offer_num'];
-                        if(task.status!= 'Completed' && task.status!= 'Expired' && task.status!= 'Cancelled'){
-                          taskList.add(task);
+                  if(taskIdList.length==0){
+                    return Center(child: Text('No offered task found.', style: TextStyle(color: Colors.grey),),);
+                  }
+                  else{
+                    return StreamBuilder<QuerySnapshot>(
+                      stream: Firestore.instance.collection('task').
+                      where('id', whereIn: taskIdList).snapshots(),
+                      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                        if(!snapshot.hasData) {
+                          return Center(child: Text('No offered found.', style: TextStyle(color: Colors.grey),),);
                         }
-                      }
-                      return TaskListView(user: user, tab: 'Offered', taskList: taskList,);
-                    },
-                  );
+                        List<Task> taskList = [];
+                        for (DocumentSnapshot doc in snapshot.data.documents) {
+                          Task task = new Task();
+                          task.id = doc.data['id'];
+                          task.createdBy = doc.data['created_by'];
+                          task.createdAt = doc.data['created_at']?.toDate();
+                          task.updatedBy = doc.data['updated_by'];
+                          task.updatedAt = doc.data['updated_at']?.toDate();
+                          task.author = doc.data['author'];
+                          task.category = doc.data['category'];
+                          task.title = doc.data['title'];
+                          task.description = doc.data['description'];
+                          task.additionalInstruction = doc.data['additional_instruction'];
+                          task.tags = doc.data['tags'];
+                          task.offerDeadline = doc.data['offer_deadline']?.toDate();
+                          task.taskDeadline = doc.data['task_deadline']?.toDate();
+                          task.location = doc.data['location'];
+                          task.fee = double.parse(doc.data['fee'].toString());
+                          task.payment = doc.data['payment'];
+                          task.status = doc.data['status'];
+                          task.offeredBy = doc.data['offered_by'];
+                          task.isCompleteByAuthor = doc.data['is_complete_by_author'];
+                          task.isCompleteByProvider = doc.data['is_complete_by_provider'];
+                          task.offerNum = doc.data['offer_num'];
+                          if(task.status!= 'Completed' && task.status!= 'Expired' && task.status!= 'Cancelled'){
+                            taskList.add(task);
+                          }
+                        }
+                        return TaskListView(user: user, tab: 'Offered', taskList: taskList,);
+                      },
+                    );
+                  }
                 }
               },
             ),
@@ -138,50 +143,56 @@ class _HomeState extends State<MyTask> {
             StreamBuilder<QuerySnapshot>(
               stream: Firestore.instance.collection('bookmark').where('user_id', isEqualTo: user.uid).snapshots(),
               builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                List<dynamic> taskIdList = new List();
+
                 if(!snapshot.hasData) {
                   return Center(child: Text('No bookmark found.', style: TextStyle(color: Colors.grey),),);
                 } else {
+                  List<dynamic> taskIdList = new List();
                   taskIdList = snapshot.data.documents.map((DocumentSnapshot docSnapshot){
                     return docSnapshot.data['task_id'];
                   }).toList();
-                  return StreamBuilder<QuerySnapshot>(
-                    stream: Firestore.instance.collection('task').where('id', whereIn: taskIdList).snapshots(),
-                    builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                      if(!snapshot.hasData) {
-                        return Center(child: Text('No bookmark found.', style: TextStyle(color: Colors.grey),),);
-                      }
-                      List<Task> taskList = [];
-                      for (DocumentSnapshot doc in snapshot.data.documents) {
-                        Task task = new Task();
-                        task.id = doc.data['id'];
-                        task.createdBy = doc.data['created_by'];
-                        task.createdAt = doc.data['created_at']?.toDate();
-                        task.updatedBy = doc.data['updated_by'];
-                        task.updatedAt = doc.data['updated_at']?.toDate();
-                        task.author = doc.data['author'];
-                        task.category = doc.data['category'];
-                        task.title = doc.data['title'];
-                        task.description = doc.data['description'];
-                        task.additionalInstruction = doc.data['additional_instruction'];
-                        task.tags = doc.data['tags'];
-                        task.offerDeadline = doc.data['offer_deadline']?.toDate();
-                        task.taskDeadline = doc.data['task_deadline']?.toDate();
-                        task.location = doc.data['location'];
-                        task.fee = double.parse(doc.data['fee'].toString());
-                        task.payment = doc.data['payment'];
-                        task.status = doc.data['status'];
-                        task.offeredBy = doc.data['offered_by'];
-                        task.isCompleteByAuthor = doc.data['is_complete_by_author'];
-                        task.isCompleteByProvider = doc.data['is_complete_by_provider'];
-                        task.offerNum = doc.data['offer_num'];
-                        if(task.status == 'Open'){
-                          taskList.add(task);
+                  if(taskIdList.length==0){
+                    return Center(child: Text('No bookmark found.', style: TextStyle(color: Colors.grey),),);
+                  }
+                  else{
+                    return StreamBuilder<QuerySnapshot>(
+                      stream: Firestore.instance.collection('task').where('id', whereIn: taskIdList).snapshots(),
+                      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                        if(!snapshot.hasData) {
+                          return Center(child: Text('No bookmark found.', style: TextStyle(color: Colors.grey),),);
                         }
-                      }
-                      return TaskListView(user: user, tab: 'Bookmark', taskList: taskList,);
-                    },
-                  );
+                        List<Task> taskList = [];
+                        for (DocumentSnapshot doc in snapshot.data.documents) {
+                          Task task = new Task();
+                          task.id = doc.data['id'];
+                          task.createdBy = doc.data['created_by'];
+                          task.createdAt = doc.data['created_at']?.toDate();
+                          task.updatedBy = doc.data['updated_by'];
+                          task.updatedAt = doc.data['updated_at']?.toDate();
+                          task.author = doc.data['author'];
+                          task.category = doc.data['category'];
+                          task.title = doc.data['title'];
+                          task.description = doc.data['description'];
+                          task.additionalInstruction = doc.data['additional_instruction'];
+                          task.tags = doc.data['tags'];
+                          task.offerDeadline = doc.data['offer_deadline']?.toDate();
+                          task.taskDeadline = doc.data['task_deadline']?.toDate();
+                          task.location = doc.data['location'];
+                          task.fee = double.parse(doc.data['fee'].toString());
+                          task.payment = doc.data['payment'];
+                          task.status = doc.data['status'];
+                          task.offeredBy = doc.data['offered_by'];
+                          task.isCompleteByAuthor = doc.data['is_complete_by_author'];
+                          task.isCompleteByProvider = doc.data['is_complete_by_provider'];
+                          task.offerNum = doc.data['offer_num'];
+                          if(task.status == 'Open'){
+                            taskList.add(task);
+                          }
+                        }
+                        return TaskListView(user: user, tab: 'Bookmark', taskList: taskList,);
+                      },
+                    );
+                  }
                 }
               },
             ),
@@ -226,51 +237,56 @@ class _HomeState extends State<MyTask> {
                     stream: Firestore.instance.collection('offer')
                         .where('user_id', isEqualTo: user.uid).snapshots(),
                     builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                      List<dynamic> taskIdList = new List();
                       if(!snapshot.hasData) {
                         return Center(child: Text('No history found.', style: TextStyle(color: Colors.grey),),);
                       } else {
+                        List<dynamic> taskIdList = new List();
                         taskIdList = snapshot.data.documents.map((DocumentSnapshot docSnapshot){
                           return docSnapshot.data['task_id'];
                         }).toList();
-                        return StreamBuilder<QuerySnapshot>(
-                          stream: Firestore.instance.collection('task').
-                          where('id', whereIn: taskIdList).snapshots(),
-                          builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                            if(!snapshot.hasData) {
-                              return Center(child: Text('No history'
-                                  ' found.', style: TextStyle(color: Colors.grey),),);
-                            }
-                            for (DocumentSnapshot doc in snapshot.data.documents) {
-                              Task task = new Task();
-                              task.id = doc.data['id'];
-                              task.createdBy = doc.data['created_by'];
-                              task.createdAt = doc.data['created_at']?.toDate();
-                              task.updatedBy = doc.data['updated_by'];
-                              task.updatedAt = doc.data['updated_at']?.toDate();
-                              task.author = doc.data['author'];
-                              task.category = doc.data['category'];
-                              task.title = doc.data['title'];
-                              task.description = doc.data['description'];
-                              task.additionalInstruction = doc.data['additional_instruction'];
-                              task.tags = doc.data['tags'];
-                              task.offerDeadline = doc.data['offer_deadline']?.toDate();
-                              task.taskDeadline = doc.data['task_deadline']?.toDate();
-                              task.location = doc.data['location'];
-                              task.fee = double.parse(doc.data['fee'].toString());
-                              task.payment = doc.data['payment'];
-                              task.status = doc.data['status'];
-                              task.offeredBy = doc.data['offered_by'];
-                              task.isCompleteByAuthor = doc.data['is_complete_by_author'];
-                              task.isCompleteByProvider = doc.data['is_complete_by_provider'];
-                              task.offerNum = doc.data['offer_num'];
-                              if(task.status== 'Completed' || task.status== 'Expired' || task.status== 'Cancelled'){
-                                taskList.add(task);
+                        if(taskIdList.length==0 && taskList.length>0){
+                          return TaskListView(user: user, tab: 'History', taskList: taskList,);
+                        }
+                        else{
+                          return StreamBuilder<QuerySnapshot>(
+                            stream: Firestore.instance.collection('task').
+                            where('id', whereIn: taskIdList).snapshots(),
+                            builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                              if(!snapshot.hasData) {
+                                return Center(child: Text('No history'
+                                    ' found.', style: TextStyle(color: Colors.grey),),);
                               }
-                            }
-                            return TaskListView(user: user, tab: 'History', taskList: taskList,);
-                          },
-                        );
+                              for (DocumentSnapshot doc in snapshot.data.documents) {
+                                Task task = new Task();
+                                task.id = doc.data['id'];
+                                task.createdBy = doc.data['created_by'];
+                                task.createdAt = doc.data['created_at']?.toDate();
+                                task.updatedBy = doc.data['updated_by'];
+                                task.updatedAt = doc.data['updated_at']?.toDate();
+                                task.author = doc.data['author'];
+                                task.category = doc.data['category'];
+                                task.title = doc.data['title'];
+                                task.description = doc.data['description'];
+                                task.additionalInstruction = doc.data['additional_instruction'];
+                                task.tags = doc.data['tags'];
+                                task.offerDeadline = doc.data['offer_deadline']?.toDate();
+                                task.taskDeadline = doc.data['task_deadline']?.toDate();
+                                task.location = doc.data['location'];
+                                task.fee = double.parse(doc.data['fee'].toString());
+                                task.payment = doc.data['payment'];
+                                task.status = doc.data['status'];
+                                task.offeredBy = doc.data['offered_by'];
+                                task.isCompleteByAuthor = doc.data['is_complete_by_author'];
+                                task.isCompleteByProvider = doc.data['is_complete_by_provider'];
+                                task.offerNum = doc.data['offer_num'];
+                                if(task.status== 'Completed' || task.status== 'Expired' || task.status== 'Cancelled'){
+                                  taskList.add(task);
+                                }
+                              }
+                              return TaskListView(user: user, tab: 'History', taskList: taskList,);
+                            },
+                          );
+                        }
                       }
                     },
                   );
@@ -347,7 +363,6 @@ class _TaskListViewState extends State<TaskListView> {
                       context,
                       MaterialPageRoute(builder: (context) => MySingleTaskView(user: user, task: taskList[index],), settings: RouteSettings(name: "TaskDetailView"))
                   );
-                  setState(() {});
                 },
                 isThreeLine: true,
                 leading: Container(
@@ -460,12 +475,11 @@ class _TaskListViewState extends State<TaskListView> {
           }
           return Card(
             child: ListTile(
-              onTap: () async {
-                await Navigator.push(
+              onTap: ()  {
+                Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => MySingleTaskView(user: user, task: taskList[index],), settings: RouteSettings(name: "TaskDetailView"))
                 );
-                setState(() {});
               },
               leading: STATUS[statusId]['icon'],
               title: Text(taskList[index].title, maxLines: 1,  overflow: TextOverflow.ellipsis,),

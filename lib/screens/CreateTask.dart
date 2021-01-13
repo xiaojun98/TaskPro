@@ -641,10 +641,10 @@ class _HomeState extends State<CreateTask> {
                             }).then((value) {
                               _analyticsService.logTaskCreated();
                               Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
-                              Navigator.pop(context, true);
-                              Navigator.push(
+                              Navigator.pushAndRemoveUntil(
                                   context,
-                                  MaterialPageRoute(builder: (context) => MyTask(user: user))
+                                  MaterialPageRoute(builder: (context) => MainNavigation(user: user)),
+                                  (route) =>false
                               );
                             });
                           });
@@ -678,9 +678,10 @@ class _HomeState extends State<CreateTask> {
                         }).then((value) {
                           _analyticsService.logTaskEdited();
                           Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
-                          Navigator.pop(context, true);
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context) => MainNavigation(user:user))
+                          Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(builder: (context) => MainNavigation(user: user)),
+                                  (route) =>false
                           );
                         });
                       } else {
