@@ -645,22 +645,37 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
                                                                             })
                                                                           });
                                                                           _analyticsService.logOfferAccepted();
+                                                                          await dialog.hide().then((value) {
+                                                                            Navigator.pop(context);
+                                                                            Navigator.pop(context);
+                                                                            String msg = response.message;
+                                                                            showDialog(
+                                                                                context: context,
+                                                                                barrierDismissible: true,
+                                                                                builder: (context) {
+                                                                                  return AlertDialog(
+                                                                                    title: Text('Payment'),
+                                                                                    content: Text('$msg. You can check your history at Account > Transaction History'),
+                                                                                  );
+                                                                                });
+                                                                          });
                                                                         }
-
-                                                                        await dialog.hide().then((value) {
-                                                                          Navigator.pop(context);
-                                                                          Navigator.pop(context);
-                                                                          String msg = response.message;
-                                                                          showDialog(
-                                                                              context: context,
-                                                                              barrierDismissible: true,
-                                                                              builder: (context) {
-                                                                                return AlertDialog(
-                                                                                  title: Text('Error Payment'),
-                                                                                  content: Text('$msg Please check your card balance and try again.'),
-                                                                                );
-                                                                              });
-                                                                        });
+                                                                        else{
+                                                                          await dialog.hide().then((value) {
+                                                                            Navigator.pop(context);
+                                                                            Navigator.pop(context);
+                                                                            String msg = response.message;
+                                                                            showDialog(
+                                                                                context: context,
+                                                                                barrierDismissible: true,
+                                                                                builder: (context) {
+                                                                                  return AlertDialog(
+                                                                                    title: Text('Error Payment'),
+                                                                                    content: Text('$msg Please check your card balance and try again.'),
+                                                                                  );
+                                                                                });
+                                                                          });
+                                                                        }
                                                                       },
                                                                       textColor: Theme.of(context).primaryColor,
                                                                       child: const Text('Yes, Accept'),
@@ -725,7 +740,7 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
                   }).then((value) {
                     checkTaskCompleted(task.id);
                   });
-                  Navigator.pop(context);
+
                 },
                 child: Text ('Mark Complete',
                   style: TextStyle(fontSize: 16,color: Colors.black,fontFamily: 'OpenSansR'),),
@@ -864,7 +879,11 @@ Widget buildActionButtons(BuildContext context, FirebaseUser user, Task task, bo
                     'status': task.isCompleteByAuthor ? 'Completed' : 'Ongoing',
                   }).then((value) {
                     checkTaskCompleted(task.id);
-                    Navigator.pop(context);
+                    Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (context) => MainNavigation(user: user)),
+                            (route) =>false
+                    );
                   });
                 },
                 child: Row(

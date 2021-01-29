@@ -178,7 +178,7 @@ class _HomeState extends State<Account> {
               ),
               ListTile(
                 onTap: () async {
-                  String pdf = await loadFile('https://firebasestorage.googleapis.com/v0/b/taskpro-47370.appspot.com/o/Terms%20and%20Condition%2FTerms%20and%20Condition%20draft%20(1).pdf?alt=media&token=80fdb31d-dc18-43ff-b1d9-f2a2c8eff064');
+                  String pdf = await loadFile('https://firebasestorage.googleapis.com/v0/b/taskpro-47370.appspot.com/o/Terms%20and%20Condition%2FTNC_Final.pdf?alt=media&token=6f573663-4ecb-4971-bfad-4fbd95662908');
                   Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => viewPdf(pdf), settings: RouteSettings(name: "PDFView"))

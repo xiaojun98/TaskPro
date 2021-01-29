@@ -97,6 +97,7 @@ class _HomeState extends State<MyTask> {
                     return Center(child: Text('No offered task found.', style: TextStyle(color: Colors.grey),),);
                   }
                   else{
+                    print("LENGTH : " + taskIdList.length.toString());
                     return StreamBuilder<QuerySnapshot>(
                       stream: Firestore.instance.collection('task').
                       where('id', whereIn: taskIdList).snapshots(),
